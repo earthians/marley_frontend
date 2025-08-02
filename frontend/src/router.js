@@ -6,7 +6,6 @@ const routes = [
   {
     path: '/',
     name: 'Home',
-    // component: () => import('@/pages/DesktopLayout.vue'),
   },
   // {
   //   path: '/waitlist',
@@ -38,26 +37,26 @@ const routes = [
     name: 'Kiosk',
     component: ()=> import('@/pages/Kiosk.vue')
   },
-  // {
-  //   path: '/QueueSelection',
-  //   name: 'QueueSelection',
-  //   component: ()=> import('@/pages/QueueSelection.vue')
-  // },
-  // {
-  //   path: '/TokenDisplay',
-  //   name: 'TokenDisplay',
-  //   component: ()=> import('@/pages/TokenDisplay.vue')
-  // },
+  {
+    path: '/QueueSelection',
+    name: 'QueueSelection',
+    component: ()=> import('@/pages/QueueSelection.vue')
+  },
+  {
+    path: '/TokenDisplay',
+    name: 'TokenDisplay',
+    component: ()=> import('@/pages/TokenDisplay.vue')
+  },
   // {
   //   path: '/practitioner_screen',
   //   name: 'practitioner_screen',
   //   component: ()=> import('@/pages/practitioner_screen.vue')
   // },
-  // {
-  //   path: '/bed_management',
-  //   name: 'bed_management',
-  //   component: ()=> import('@/pages/bed_management.vue')
-  // },
+  {
+    path: '/bed_management',
+    name: 'bed_management',
+    component: ()=> import('@/pages/bed_management.vue')
+  },
 ]
 
 let router = createRouter({

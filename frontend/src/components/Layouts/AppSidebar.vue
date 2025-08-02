@@ -103,16 +103,16 @@ const allViews = computed(() => {
     //   icon: DoctorIcon,
     //   to: 'practitioner_screen',
     // },
-    // {
-    //   label: 'Bed Management',
-    //   icon: BedManagementIcon,
-    //   to: 'bed_management',
-    // },
-    // {
-    //   label: 'Queue',
-    //   icon: MonitorIcon,
-    //   to: 'QueueSelection',
-    // },
+    {
+      label: 'Bed Management',
+      icon: BedManagementIcon,
+      to: 'bed_management',
+    },
+    {
+      label: 'Queue',
+      icon: MonitorIcon,
+      to: 'QueueSelection',
+    },
     {
       label: 'Kiosk',
       icon: KioskIcon,
