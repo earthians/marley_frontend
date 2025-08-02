@@ -1,4 +1,4 @@
-### Marley Frondent
+### Marley Frontend
 
 Frontend UI application for healthcare workflows built on top of the Marley Healthcare app. Provides Frappe UI-based pages for patient, doctor, and clinic interactions.
 

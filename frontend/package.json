@@ -1,0 +1,29 @@
+{
+  "name": "frappe-ui-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build --base=/assets/marley_frontend/frontend/ && yarn copy-html-entry",
+    "preview": "vite preview",
+    "copy-html-entry": "cp ../marley_frontend/public/frontend/index.html ../marley_frontend/www/healthcare.html"
+  },
+  "dependencies": {
+    "feather-icons": "^4.28.0",
+    "frappe-ui": "^0.1.176",
+    "gemoji": "^8.1.0",
+    "highlight.js": "11",
+    "socket.io-client": "^4.7.2",
+    "vue": "^3.2.25",
+    "vue-qrcode-reader": "^5.7.3",
+    "vue-router": "^4.0.12"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "4.2.3",
+    "autoprefixer": "^10.4.2",
+    "postcss": "^8.4.5",
+    "tailwindcss": "3.4.15",
+    "vite": "4.4.9"
+  }
+}

@@ -1,0 +1,156 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2023-11-14 19:07:38.390269",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "reference_doctype",
+  "reference_docname",
+  "column_break_ufse",
+  "status",
+  "queue_details_section",
+  "service_unit",
+  "medical_department",
+  "column_break_mrob",
+  "practitioner",
+  "user",
+  "section_break_lohh",
+  "check_in_time",
+  "entry_time",
+  "column_break_jvzj",
+  "exit_time",
+  "summary_section",
+  "time_in_queue",
+  "column_break_fnad",
+  "time_to_complete"
+ ],
+ "fields": [
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Link",
+   "label": "Reference Dt",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference_docname",
+   "fieldtype": "Dynamic Link",
+   "label": "Reference Dn",
+   "options": "reference_doctype",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_ufse",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "\nChecked In\nChecked Out\nIn Progress\nScheduled\nNo Show",
+   "read_only": 1
+  },
+  {
+   "fieldname": "queue_details_section",
+   "fieldtype": "Section Break",
+   "label": "Queue Details"
+  },
+  {
+   "fieldname": "service_unit",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Service Unit",
+   "options": "Healthcare Service Unit",
+   "read_only": 1
+  },
+  {
+   "fieldname": "medical_department",
+   "fieldtype": "Link",
+   "label": "Medical Department",
+   "options": "Medical Department",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_mrob",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "practitioner",
+   "fieldtype": "Link",
+   "label": "Practitioner",
+   "options": "Healthcare Practitioner",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_lohh",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "check_in_time",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Check in Time",
+   "read_only": 1
+  },
+  {
+   "fieldname": "entry_time",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Entry Time",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_jvzj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "exit_time",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Exit Time",
+   "read_only": 1
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "summary_section",
+   "fieldtype": "Section Break",
+   "label": "Summary"
+  },
+  {
+   "fieldname": "time_in_queue",
+   "fieldtype": "Float",
+   "label": "Time In Queue",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_fnad",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "time_to_complete",
+   "fieldtype": "Float",
+   "label": "Time To Complete",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2023-11-16 21:59:12.455846",
+ "modified_by": "Administrator",
+ "module": "Marley Frontend",
+ "name": "Patient Journey Stop",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

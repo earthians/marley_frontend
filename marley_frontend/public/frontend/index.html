@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/assets/marley_frontend/frontend/favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Healthcare</title>
+    <script type="module" crossorigin src="/assets/marley_frontend/frontend/assets/index-8ff34837.js"></script>
+    <link rel="stylesheet" href="/assets/marley_frontend/frontend/assets/index-8b2d9bd4.css">
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="modals"></div>
+    <div id="popovers"></div>
+
+    <script> window.csrf_token = '{{ csrf_token }}'; </script>
+    
+  
+          <script>
+              {% for key in boot %}
+              window["{{ key }}"] = {{ boot[key] | tojson }};
+              {% endfor %}
+          </script>
+          </body>
+          
+</html>

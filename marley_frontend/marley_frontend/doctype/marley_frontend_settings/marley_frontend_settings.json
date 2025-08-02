@@ -1,0 +1,145 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-07-31 22:23:51.531616",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "branding_tab",
+  "brand_name",
+  "column_break_xfrm",
+  "brand_logo",
+  "favicon",
+  "dropdown_items_tab",
+  "dropdown_items",
+  "kiosk_settings_tab",
+  "default_appointment_type",
+  "home_screen_brand",
+  "column_break_heif",
+  "show_browser_alert_for_otp",
+  "insert_error_log_for_otp_verification",
+  "appointment_desk_tab",
+  "default_payment_entry_print_format",
+  "column_break_xtnh",
+  "default_boarding_pass_print_format"
+ ],
+ "fields": [
+  {
+   "fieldname": "branding_tab",
+   "fieldtype": "Tab Break",
+   "label": "Branding"
+  },
+  {
+   "fieldname": "brand_name",
+   "fieldtype": "Data",
+   "label": "Name"
+  },
+  {
+   "description": "An image with 1:1 & 2:1 ratio is preferred",
+   "fieldname": "brand_logo",
+   "fieldtype": "Attach",
+   "label": "Logo"
+  },
+  {
+   "description": "An icon file with .ico extension. Should be 16 x 16 px. Generated using a favicon generator. [favicon-generator.org]",
+   "fieldname": "favicon",
+   "fieldtype": "Attach",
+   "label": "Favicon"
+  },
+  {
+   "fieldname": "dropdown_items_tab",
+   "fieldtype": "Tab Break",
+   "label": "Dropdown Items"
+  },
+  {
+   "fieldname": "dropdown_items",
+   "fieldtype": "Table",
+   "options": "Marley Dropdown Item"
+  },
+  {
+   "description": "An image with 1:1 & 2:1 ratio is preferred",
+   "fieldname": "home_screen_brand",
+   "fieldtype": "Attach",
+   "label": "Home Screen Brand"
+  },
+  {
+   "fieldname": "kiosk_settings_tab",
+   "fieldtype": "Tab Break",
+   "label": "Kiosk Settings"
+  },
+  {
+   "fieldname": "default_appointment_type",
+   "fieldtype": "Link",
+   "label": "Default Appointment Type",
+   "options": "Appointment Type"
+  },
+  {
+   "default": "0",
+   "description": "If checked OTP will show on browser alerts",
+   "fieldname": "show_browser_alert_for_otp",
+   "fieldtype": "Check",
+   "label": "Show Browser Alert for OTP"
+  },
+  {
+   "default": "0",
+   "description": "If Checked the OTP generated to verify mobile number will insert an error log",
+   "fieldname": "insert_error_log_for_otp_verification",
+   "fieldtype": "Check",
+   "label": "Insert Error Log for OTP Verification"
+  },
+  {
+   "fieldname": "column_break_heif",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "appointment_desk_tab",
+   "fieldtype": "Tab Break",
+   "label": "Appointment Desk"
+  },
+  {
+   "fieldname": "default_payment_entry_print_format",
+   "fieldtype": "Link",
+   "label": "Default Payment Entry Print Format",
+   "options": "Print Format"
+  },
+  {
+   "fieldname": "column_break_xtnh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "default_boarding_pass_print_format",
+   "fieldtype": "Link",
+   "label": "Default Boarding Pass Print Format",
+   "options": "Print Format"
+  },
+  {
+   "fieldname": "column_break_xfrm",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2025-08-19 11:54:01.707722",
+ "modified_by": "Administrator",
+ "module": "Marley Frontend",
+ "name": "Marley Frontend Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

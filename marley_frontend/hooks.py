@@ -1,5 +1,5 @@
 app_name = "marley_frontend"
-app_title = "Marley Frondent"
+app_title = "Marley Frontend"
 app_publisher = "earthians Health Informatics Pvt. Ltd"
 app_description = "Frontend UI application for healthcare workflows built on top of the Marley Healthcare app. Provides Frappe UI-based pages for patient, doctor, and clinic interactions."
 app_email = "info@earthianslive.com"
@@ -8,14 +8,14 @@ app_license = "mit"
 # Apps
 # ------------------
 
-# required_apps = []
+required_apps = ["healthcare"]
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
 # 	{
 # 		"name": "marley_frontend",
 # 		"logo": "/assets/marley_frontend/logo.png",
-# 		"title": "Marley Frondent",
+# 		"title": "Marley Frontend",
 # 		"route": "/marley_frontend",
 # 		"has_permission": "marley_frontend.api.permission.has_app_permission"
 # 	}
@@ -43,7 +43,11 @@ app_license = "mit"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {
+	"Healthcare Service Unit" : "public/js/healthcare_service_unit.js",
+	"Vital Signs" : "public/js/vital_signs.js",
+	"Patient Appointment": "public/js/patient_appointment.js",
+}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -143,7 +147,10 @@ app_license = "mit"
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
+    "daily": [
+        "marley_frontend.marley_frontend.doctype.patient_token.patient_token.update_token_status",
+    ],
 # 	"all": [
 # 		"marley_frontend.tasks.all"
 # 	],
@@ -159,7 +166,7 @@ app_license = "mit"
 # 	"monthly": [
 # 		"marley_frontend.tasks.monthly"
 # 	],
-# }
+}
 
 # Testing
 # -------
@@ -237,3 +244,4 @@ app_license = "mit"
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
 
+website_route_rules = [{"from_route": "/healthcare/<path:app_path>", "to_route": "healthcare"},]

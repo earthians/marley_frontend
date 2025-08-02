@@ -1,0 +1,254 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:TKN-{YY}-{MM}-{DD}-{#####}",
+ "creation": "2023-11-15 14:06:09.157397",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_itxl",
+  "token_number",
+  "token_name",
+  "status",
+  "column_break_qyky",
+  "posting_date",
+  "is_priority",
+  "priority_level",
+  "slot_position",
+  "patient_details_section",
+  "patient",
+  "patient_name",
+  "age",
+  "gender",
+  "column_break_trqi",
+  "email",
+  "phone",
+  "reference_doc_details_section",
+  "patient_journey_stops",
+  "total_time_in_queue",
+  "section_break_dphf",
+  "next",
+  "column_break_qzun",
+  "head",
+  "more_information_section",
+  "current_service_unit",
+  "column_break_xbec",
+  "reference_dt",
+  "reference_dn"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_itxl",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "token_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Token Number",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_qyky",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Active\nNo Show\nExpired\nChecked In\nChecked Out\nExited",
+   "read_only": 1
+  },
+  {
+   "fieldname": "posting_date",
+   "fieldtype": "Datetime",
+   "label": "Posting Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "patient_details_section",
+   "fieldtype": "Section Break",
+   "label": "Patient Details"
+  },
+  {
+   "fieldname": "patient",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Patient",
+   "options": "Patient",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fetch_from": "patient.patient_name",
+   "fieldname": "patient_name",
+   "fieldtype": "Data",
+   "label": "Patient Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "age",
+   "fieldtype": "Int",
+   "label": "Age",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "patient.sex",
+   "fieldname": "gender",
+   "fieldtype": "Link",
+   "label": "Gender",
+   "options": "Gender",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_trqi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "options": "Email",
+   "read_only": 1
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "Phone",
+   "options": "Phone",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference_doc_details_section",
+   "fieldtype": "Section Break",
+   "label": "Reference Doc Details"
+  },
+  {
+   "fieldname": "patient_journey_stops",
+   "fieldtype": "Table",
+   "label": "Patient Journey Stops",
+   "options": "Patient Journey Stop"
+  },
+  {
+   "fieldname": "total_time_in_queue",
+   "fieldtype": "Float",
+   "label": "Total Time In Queue",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_dphf",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "next",
+   "fieldtype": "Data",
+   "label": "Next",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_qzun",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "head",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Head",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_service_unit",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Current Service Unit",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_priority",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Priority",
+   "read_only": 1
+  },
+  {
+   "fieldname": "priority_level",
+   "fieldtype": "Int",
+   "label": "Priority Level",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "more_information_section",
+   "fieldtype": "Section Break",
+   "label": "More Information"
+  },
+  {
+   "fieldname": "reference_dt",
+   "fieldtype": "Link",
+   "label": "Reference dt",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference_dn",
+   "fieldtype": "Dynamic Link",
+   "label": "Reference dn",
+   "options": "reference_dt",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_xbec",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "token_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Token Name",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "slot_position",
+   "fieldtype": "Int",
+   "label": "Slot Position"
+  }
+ ],
+ "grid_page_length": 50,
+ "in_create": 1,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-07-06 23:20:44.657201",
+ "modified_by": "Administrator",
+ "module": "Marley Frontend",
+ "name": "Patient Token",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -1,0 +1,162 @@
+from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+
+
+def execute():
+	custom_field = {
+		"Patient Appointment": [
+			{
+				"fieldname": "is_called",
+				"label": "Called",
+				"fieldtype": "Check",
+				"read_only": True,
+				"insert_after": "appointment_date",
+				"no_copy": True,
+				"hidden": True,
+			},
+			{
+				"fieldname": "custom_registration_fee_paid",
+				"label": "Registration Fee Paid",
+				"fieldtype": "Check",
+				"read_only": 1,
+				"default": 0,
+				"hidden": 1,
+				"insert_after": "patient_age",
+			},
+			{
+				"fieldname": "custom_registration_fee_invoiced",
+				"label": "Registration Fee Invoiced",
+				"fieldtype": "Check",
+				"read_only": 1,
+				"default": 0,
+				"hidden": 1,
+				"insert_after": "custom_registration_fee_paid",
+			},
+			{
+				"fieldname": "custom_consultation_paid",
+				"label": "Consultation Paid",
+				"fieldtype": "Check",
+				"read_only": 1,
+				"default": 0,
+				"hidden": 1,
+				"insert_after": "invoiced",
+			},
+			{
+				"fieldname": "custom_reschedule_reason",
+				"label": "Reschedule Reason",
+				"fieldtype": "Small Text",
+				"insert_after": "google_meet_link",
+			},
+			{
+				"fieldname": "custom_cancel_reason",
+				"label": "Cancel Reason",
+				"fieldtype": "Small Text",
+				"insert_after": "custom_reschedule_reason",
+			},
+		],
+		"Healthcare Settings": [
+			{
+				"fieldname": "show_qr_camera_on_checkin_page",
+				"label": "Show QR Camera on Checkin Page",
+				"fieldtype": "Check",
+				"insert_after": "custom_show_browser_alert_for_otp",
+				"default": 0,
+				"description": "If checked the QR camera show in Checkin page continuosly. Else need to manually click on button to open QR camera",
+			},
+			{
+				"fieldname": "show_qr_camera_on_kiosk_page",
+				"label": "Show QR Camera on Kiosk Page",
+				"fieldtype": "Check",
+				"insert_after": "show_qr_camera_on_checkin_page",
+				"default": 0,
+				"description": "If checked the QR camera show in Kiosk page continuosly. Else need to manually click on button to open QR camera",
+			},
+			{
+				"fieldname": "default_boarding_pass_print",
+				"label": "Default Boarding Pass Print Format",
+				"fieldtype": "Link",
+				"options": "Print Format",
+				"insert_after": "consider_after_number_of_token",
+			},
+			{
+				"fieldname": "default_payment_entry_print",
+				"label": "Default Payment Entry Print Format",
+				"fieldtype": "Link",
+				"options": "Print Format",
+				"insert_after": "default_boarding_pass_print",
+			},
+			{
+				"fieldname": "token_limit",
+				"label": "Token Limit",
+				"fieldtype": "Int",
+				"read_only": False,
+				"insert_after": "token_series",
+				"no_copy": True,
+				"default": 5
+			},
+		],
+		"Healthcare Service Unit": [
+			{
+				"fieldname": "room_status",
+				"label": "Room Status",
+				"fieldtype": "Select",
+				"read_only": True,
+				"insert_after": "occupancy_status",
+				"no_copy": True,
+				"options": "Vacant\nOccupied\nCleaning",
+				"depends_on": "eval:doc.inpatient_occupancy == 1",
+			},
+			{
+				"fieldname": "custom_slot_based_token",
+				"label": "Slot Based Token",
+				"fieldtype": "Check",
+				"insert_after": "checked_in",
+			},
+		],
+		"Patient": [
+			{
+				"fieldname": "custom_aadhaar_number",
+				"label": "Aadhaar Number",
+				"fieldtype": "Data",
+				"insert_after": "uid",
+				"unique": True,
+				"in_standard_filter": True,
+				
+			},
+			{
+				"fieldname": "custom_passport_number",
+				"label": "Passport Number",
+				"fieldtype": "Data",
+				"insert_after": "custom_aadhaar_number",
+				"unique": True,
+				"in_standard_filter": True,
+				"custom_aadhaar_number": 'eval: doc.country != "India"',
+			},
+			{
+				"fieldname": "invoiced",
+				"label": "Registration Paid",
+				"fieldtype": "Check",
+				"read_only": True,
+				"insert_after": "consent_for_aadhaar_use",
+				"no_copy": True,
+			},
+			{
+				"fieldname": "payment_entry_created",
+				"label": " Paid",
+				"fieldtype": "Check",
+				"read_only": True,
+				"insert_after": "invoiced",
+				"no_copy": True,
+			},
+		],
+		"Payment Entry": [
+            {
+                "fieldname": "register_paid",
+                "label": "Registration Paid",
+                "fieldtype": "Check",
+                "insert_after": "paid_amount",
+                "no_copy": True,
+            },
+        ]
+	}
+
+	create_custom_fields(custom_field)
