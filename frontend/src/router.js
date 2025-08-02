@@ -7,11 +7,11 @@ const routes = [
     path: '/',
     name: 'Home',
   },
-  // {
-  //   path: '/waitlist',
-  //   name: 'Waitlist',
-  //   component: () => import('@/pages/Waitlist.vue'),
-  // },
+  {
+    path: '/waitlist',
+    name: 'Waitlist',
+    component: () => import('@/pages/Waitlist.vue'),
+  },
   {
     path: '/Register',
     name: 'Register',
@@ -72,7 +72,7 @@ router.beforeEach(async (to, from, next) => {
     isLoggedIn = false
   }
   if (to.name === 'Home' && isLoggedIn) {
-    next({ name: 'Kiosk' })
+    next({ name: 'Waitlist' })
   } else if (!isLoggedIn) {
     window.location.href = '/login?redirect-to=/healthcare/'
   } else {

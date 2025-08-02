@@ -11,6 +11,7 @@ declare module 'vue' {
     AboutModal: typeof import('./src/components/Modals/AboutModal.vue')['default']
     AddChartModal: typeof import('./src/components/Dashboard/AddChartModal.vue')['default']
     AppHeader: typeof import('./src/components/Layouts/AppHeader.vue')['default']
+    AppointmentModal: typeof import('./src/components/AppointmentModal.vue')['default']
     Apps: typeof import('./src/components/Apps.vue')['default']
     AppsIcon: typeof import('./src/components/Icons/AppsIcon.vue')['default']
     AppSidebar: typeof import('./src/components/Layouts/AppSidebar.vue')['default']

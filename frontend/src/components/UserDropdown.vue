@@ -52,7 +52,7 @@
 <script setup>
 import BrandLogo from '@/components/BrandLogo.vue'
 import Apps from '@/components/Apps.vue'
-import { sessionUser } from '@/data/session'
+import { session } from '@/data/session'
 import { getUser } from '@/data/users'
 import { getSettings } from '@/stores/settings'
 import { showAboutModal } from '@/composables/modals'
@@ -69,7 +69,7 @@ const props = defineProps({
 })
 
 const { settings, brand } = getSettings()
-const { logout } = sessionUser()
+const logout = session.logout
 
 const user = computed(() => getUser() || {})
 

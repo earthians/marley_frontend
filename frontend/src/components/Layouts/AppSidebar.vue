@@ -93,11 +93,11 @@ const allViews = computed(() => {
     //   icon: LucideLayoutDashboard,
     //   to: 'Dashboard'
     // },
-    // {
-    //   label: 'Appointment Desk',
-    //   icon: AppointmentDeskIcon,
-    //   to: 'Waitlist',
-    // },
+    {
+      label: 'Appointment Desk',
+      icon: AppointmentDeskIcon,
+      to: 'Waitlist',
+    },
     // {
     //   label: 'Practitioner Screen',
     //   icon: DoctorIcon,

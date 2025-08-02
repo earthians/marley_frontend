@@ -9,14 +9,6 @@ export function sessionUser() {
   if (_sessionUser === 'Guest') {
     _sessionUser = null
   }
-  const logout = createResource({
-    url: 'logout',
-    onSuccess() {
-      userResource.reset()
-      user.value = null
-      window.location.href = '/login?redirect-to=/crm'
-    },
-  })
 
   return _sessionUser
 }
@@ -41,8 +33,8 @@ export let session = reactive({
     url: 'logout',
     onSuccess() {
       users.reset()
-      session.user = sessionUser()
-      router.replace({ name: 'Login' })
+      session.user = null
+      window.location.href = '/login?redirect-to=/healthcare'
     },
   }),
   user: sessionUser(),
