@@ -61,7 +61,7 @@
 		},
 	}" v-model="dialogReg">
 		<template #body-content>
-			<h3 class="text-ink-gray-8">No Patient found for the given phone number. Proceed to new Patient registration?</h3>
+			<h3 class="text-ink-gray-8">No Patient found for the given Mobile number. Proceed to new Patient registration?</h3>
 		</template>
 		<template #actions>
 			<Button variant="solid" @click="router.push('Register')">
@@ -402,7 +402,7 @@
 					form_firstName.value = response.doc.first_name || '';
 					form_lastName.value = response.doc.last_name || '';
 					form_gender.value = response.doc.sex || '';
-					form_mobile.value = response.doc.phone || '';
+					form_mobile.value = response.doc.mobile || '';
 					form_dob.value = response.doc.dob || '';
 					form_addressLine1.value = response.doc.address_line1 || '';
 					form_addressLine2.value = response.doc.address_line2 || '';

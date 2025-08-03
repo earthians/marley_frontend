@@ -43,22 +43,22 @@ def get_filter_options(room_type_filter):
 	patient_options = frappe.db.get_all(
 		"Patient",
 		filters={"status": "Active", "inpatient_record": ["is", "set"]},
-		fields=["patient_name as label", "name as value", "phone"],
+		fields=["patient_name as label", "name as value", "mobile"],
 		order_by="name ASC",
 	)
 	for pat in patient_options:
-		if pat.phone:
-			pat["label"] = f"{pat.label}-{pat.phone}"
+		if pat.mobile:
+			pat["label"] = f"{pat.label}-{pat.mobile}"
 
 	allocate_patient_options = frappe.db.get_all(
 		"Patient",
 		filters={"status": "Active", "inpatient_record": ["is", "not set"]},
-		fields=["patient_name as label", "name as value", "phone"],
+		fields=["patient_name as label", "name as value", "mobile"],
 		order_by="name ASC",
 	)
 	for pat in allocate_patient_options:
-		if pat.phone:
-			pat["label"] = f"{pat.label}-{pat.phone}"
+		if pat.mobile:
+			pat["label"] = f"{pat.label}-{pat.mobile}"
 
 	consultant_options = frappe.db.get_all(
 		"Healthcare Practitioner",

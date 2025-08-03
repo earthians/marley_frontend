@@ -154,7 +154,7 @@
 						variant="subtle"
 						placeholder="Date of Birth"
 						:disabled="false"
-						:required="true"
+						:required="false"
 						label="Date of Birth"
 					/>
 					<ErrorMessage v-if="errors.dob" :message="errors.dob" />
@@ -172,7 +172,7 @@
 				<div class="p-1">
 					<FormControl type="select" :options="['Single', 'Married', 'Divorced', 'Widow']"
 						v-model="marital_status" label="Marital Status" size="sm" :disabled="false"
-						:required="true" class="w-full" />
+						:required="false" class="w-full" />
 						<ErrorMessage v-if="errors.marital_status" :message="errors.marital_status" />
 				</div>
 
@@ -180,60 +180,41 @@
 				<div class="p-1">
 					<FormControl :type="'email'" :ref_for="true" size="sm" variant="subtle"
 						:label="translations.email[selectedLanguage]" :disabled="false" v-model="email"
-						:required="true" class="w-full" />
+						:required="false" class="w-full" />
 						<ErrorMessage v-if="errors.email" :message="errors.email" />
 				</div>
 
 				<!-- Country Autocomplete -->
 				<div class="p-1">
 					<FormControl type="autocomplete" :options="countryOptions" size="sm" variant="subtle"
-						:label="translations.nation[selectedLanguage]" :disabled="false" :required="true"
+						:label="translations.nation[selectedLanguage]" :disabled="false" :required="false"
 						v-model="country" class="w-full"/>
 						<ErrorMessage v-if="errors.country" :message="errors.country" />
 				</div>
-				<div class="p-1" v-if="country.value === 'India'">
-					<FormControl :type="'text'" :ref_for="true" size="sm" variant="subtle"
-						:label="translations.aadhaar_number[selectedLanguage]" :disabled="false"
-						v-model="aadhaar_number" class="w-full" />
-				</div>
-				<div class="p-1" v-else>
-					<FormControl :type="'text'" :ref_for="true" size="sm" variant="subtle"
-						:label="translations.passport_number[selectedLanguage]" :required="true" :disabled="false"
-						v-model="passport_number" class="w-full" />
-						<ErrorMessage v-if="errors.passport_number" :message="errors.passport_number" />
-				</div>
 				<div class="p-1">
 					<FormControl label="Address Line 1" v-model="addressLine1" type="text" size="sm"
-						variant="subtle" :disabled="false" :required="true" class="w-full" />
+						variant="subtle" :disabled="false" :required="false" class="w-full" />
 						<ErrorMessage v-if="errors.addressLine1" :message="errors.addressLine1" />
 				</div>
 				<div class="p-1">
 					<FormControl label="Address Line 2" v-model="addressLine2" type="text" size="sm"
-						variant="subtle" :disabled="false" :required="true" class="w-full" />
+						variant="subtle" :disabled="false" :required="false" class="w-full" />
 						<ErrorMessage v-if="errors.addressLine2" :message="errors.addressLine2" />
 				</div>
 				<div class="p-1">
 					<FormControl label="City/District" v-model="city" type="text" size="sm"
-						variant="subtle" :disabled="false" :required="true" class="w-full" />
+						variant="subtle" :disabled="false" :required="false" class="w-full" />
 						<ErrorMessage v-if="errors.city" :message="errors.city" />
 				</div>
 				<div class="p-1">
 					<FormControl label="State/Province" v-model="state" type="text" size="sm"
-						variant="subtle" :disabled="false" :required="true" class="w-full" />
+						variant="subtle" :disabled="false" :required="false" class="w-full" />
 						<ErrorMessage v-if="errors.state" :message="errors.state" />
 				</div>
 				<div class="p-1">
 					<FormControl label="ZIP Code" v-model="zip" type="text" size="sm" variant="subtle"
-						:disabled="false" :required="true" class="w-full" />
+						:disabled="false" :required="false" class="w-full" />
 						<ErrorMessage v-if="errors.zip" :message="errors.zip" />
-				</div>
-				<div class="pt-6">
-					<Checkbox
-						size="sm"
-						:value="true"
-						v-model="invite_user"
-						label="Invite as a User"
-					/>
 				</div>
 			</div>
 
@@ -308,7 +289,6 @@
 	let errors = ref({});
 	let profile_image = ref("");
 	let default_profile_image = ref("");
-	let invite_user = ref(0);
 	let open_camera = ref(false);
 	let logo = ref("");
 	let get_logo = createResource({
@@ -405,8 +385,7 @@
 				state: state.value || "",
 				address2: addressLine2.value || "",
 				zip: zip.value || "",
-				file: profile_image.value || null,
-				invite_user: invite_user?.value || null
+				file: profile_image.value || null
 			};
 		},
 		onSuccess(response) {
@@ -529,8 +508,7 @@
 	function handleButtonClick() {
 		errors.value = {};
 		let isValid = true;
-		if (!firstname.value || !gender.value || !dob.value || !mobile.value || !marital_status.value || !email.value
-		|| !country.value || !addressLine1.value || !addressLine2.value || !city.value || !state.value || !zip) {
+		if (!firstname.value || !gender.value || !mobile.value) {
 			if (!firstname.value ) {
 				errors.value.firstname = "This field is required.";
 				isValid = false;
@@ -539,50 +517,8 @@
 				errors.value.gender = "This field is required.";
 				isValid = false;
 			}
-			if (!dob.value ) {
-				errors.value.dob = "This field is required.";
-				isValid = false;
-			}
 			if (!mobile.value ) {
 				errors.value.mobile = "This field is required.";
-				isValid = false;
-			}
-			if (!marital_status.value ) {
-				errors.value.marital_status = "This field is required.";
-				isValid = false;
-			}
-			if (!email.value) {
-				errors.value.email = "This field is required.";
-				isValid = false;
-			}
-			if (!country.value ) {
-				errors.value.country = "This field is required.";
-				isValid = false;
-			}
-			else if (country.value != "India") {
-				if(!passport_number.value) {
-					errors.value.passport_number = "This field is required.";
-					isValid = false;
-				}
-			}
-			if (!addressLine1.value ) {
-				errors.value.addressLine1 = "This field is required.";
-				isValid = false;
-			}
-			if (!addressLine2.value ) {
-				errors.value.addressLine2 = "This field is required.";
-				isValid = false;
-			}
-			if (!city.value ) {
-				errors.value.city = "This field is required.";
-				isValid = false;
-			}
-			if (!state.value ) {
-				errors.value.state = "This field is required.";
-				isValid = false;
-			}
-			if (!zip.value ) {
-				errors.value.zip = "This field is required.";
 				isValid = false;
 			}
 		} else {

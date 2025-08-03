@@ -33,7 +33,7 @@ def patient_registration(file=None):
 	new_patient.sex = frappe.form_dict.get("gender")
 	new_patient.email = frappe.form_dict.get("email")
 	new_patient.invite_user = invite_user if invite_user else False
-	new_patient.phone = frappe.form_dict.get("mobile")
+	new_patient.mobile = frappe.form_dict.get("mobile")
 	new_patient.country = country
 	new_patient.dob = frappe.form_dict.get("dob")
 	new_patient.marital_status = frappe.form_dict.get("marital")
@@ -342,9 +342,9 @@ def get_patient(patient_id):
 		return {"error": "Enter a valid details"}
 
 	token_exists = frappe.db.exists("Patient Token", patient_id)
-	if patient_id and frappe.db.exists("Patient", {"phone": patient_id}):
+	if patient_id and frappe.db.exists("Patient", {"mobile": patient_id}):
 		patients = frappe.db.get_all(
-			"Patient", filters={"phone": patient_id}, fields={"name", "patient_name"}
+			"Patient", filters={"mobile": patient_id}, fields={"name", "patient_name"}
 		)
 
 		if patients:
@@ -453,7 +453,7 @@ def get_appointment(
 		as_list=False,
 	)
 	for appointment in appointment_data:
-		patient_data = frappe.get_value("Patient", appointment.patient, "phone")
+		patient_data = frappe.get_value("Patient", appointment.patient, "mobile")
 		mobile_number = patient_data if patient_data else "Not Available"
 
 		appointments.append(
@@ -464,7 +464,7 @@ def get_appointment(
 				"practitioner": appointment["practitioner_name"],
 				"service": appointment["service_unit"],
 				"status": appointment["status"],
-				"phone": mobile_number,
+				"mobile": mobile_number,
 			}
 		)
 		search_options.append(
@@ -928,7 +928,7 @@ def check_patient_details(patient_id):
 			"gender": patient.sex,
 			"dob": patient.dob,
 			"email": patient.email,
-			"mobile": patient.phone,
+			"mobile": patient.mobile,
 			"city": patient.city,
 			"state": patient.state,
 			"zip": patient.zip_code,
@@ -946,7 +946,7 @@ def update_patient():
 	patient.last_name = frappe.form_dict.get("lastname")
 	patient.sex = frappe.form_dict.get("gender")
 	patient.dob = frappe.form_dict.get("dob")
-	patient.phone = frappe.form_dict.get("mobile")
+	patient.mobile = frappe.form_dict.get("mobile")
 	patient.address_line1 = frappe.form_dict.get("address1")
 	patient.address_line2 = frappe.form_dict.get("address2")
 	patient.city = frappe.form_dict.get("city")
