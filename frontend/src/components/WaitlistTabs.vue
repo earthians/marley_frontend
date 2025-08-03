@@ -3,18 +3,14 @@
 		<Tabs as="div" v-model="activeTab" :tabs="appointmentTabs">
 			<template #tab-panel="{ tab }">
 				<ListView
-					class="h-full"
+					class="h-[75vh]"
 					:columns="columns"
 					:rows="tab?.appointments || []"
 					:options="{
 						selectable: false,
 						showTooltip: true,
 						resizeColumn: true,
-						emptyState: {
-							title: 'No Appointments',
-							description: 'No Appointments available',
-						},
-						rowHeight: 110,
+						rowHeight: 90,
 					}"
 					row-key="name"
 				>
@@ -59,9 +55,9 @@
 											<div class="flex items-center">
 												<FeatherIcon :name="'phone'" class="h-3 w-3" />
 											</div>
-											<Tooltip :text="'Contact: ' + row.phone" placement="top">
+											<Tooltip :text="'Contact: ' + row.mobile" placement="top">
 												<div class="py-1 px-1 text-center text-base">
-													{{ row.phone }}
+													{{ row.mobile }}
 												</div>
 											</Tooltip>
 										</div>

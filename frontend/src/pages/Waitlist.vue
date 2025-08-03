@@ -8,7 +8,7 @@
 				<Button
 					variant="solid"
 					:label="'Book'"
-					@click="appointment_creation()"
+					@click="onBookClick()"
 				>
 					<template #prefix><FeatherIcon name="plus" class="h-4" /></template>
 				</Button>
@@ -41,32 +41,15 @@
 			:appointment-tabs="appointment_tabs"
 		/>
 	</div>
-	<Dialog :options="{
-		title: 'Confirm',
-		message: 'Click confirm to go to Home page',
-		size: 'xl',
-		icon: {
-			name: 'alert-triangle',
-			appearance: 'warning',
-		},
-		actions: [
-			{
-				label: 'Confirm',
-				variant: 'solid',
-				onClick: () => {
-					return go_to_desk_page();
-				},
-			},
-			{
-				label: 'Cancel',
-				onClick: () => {
-					return confirm_to_desk_dialog = false;
-				},
-			},
-		],
-	}" v-model="confirm_to_desk_dialog"/>
+	<AppointmentModal
+		v-if="make_appointment_dialog"
+		v-model="make_appointment_dialog"
+		:defaults="defaults"
+		@appointment_booked="Appointmentlist.reload()"
+	/>
 
-	<Dialog :options="{
+	<Dialog
+		:options="{
 		title: `${dialog_title}`,
 		message: `${dialog_message}`,
 		size: 'xl',
@@ -80,9 +63,10 @@
 				variant: 'solid',
 			},
 		],
-	}" v-model="alert_dialog" @click="alert_dialog.value = false"/>
+	}" v-model="alert_dialog" @click="alert_dialog = false"/>
 
-	<Dialog :options="{
+	<Dialog
+		:options="{
 		title: `${dialog_title}`,
 		message: `${dialog_message}`,
 		size: 'xl',
@@ -100,23 +84,25 @@
 </template>
 
 <script setup>
-	import { ref, computed, watch } from 'vue'
+	import { ref, computed, watch, reactive, onMounted, inject } from 'vue'
 	import LayoutHeader from '@/components/LayoutHeader.vue'
 	import ViewBreadcrumbs from '@/components/ViewBreadcrumbs.vue'
+	import AppointmentModal from '@/components/AppointmentModal.vue'
 	import SearchFilters from '@/components/SearchFilters.vue'
 	import WaitlistTabs from '@/components/WaitlistTabs.vue'
 	import { createResource } from "frappe-ui"
 
-	const search = ref('')
-	const patient_search = ref('')
-	const mobile_search = ref('')
-	const department = ref('')
-	const practitioner = ref('')
-	const visitType = ref('')
-	const sort_by = ref('')
-	const dateValue = ref('')
+	const search = ref("");
+	const patient_search = ref("");
+	const mobile_search = ref("");
+	const department = ref("");
+	const practitioner = ref("");
+	const visitType = ref("");
+	const sort_by = ref("");
+	const dateValue = ref("");
 	let dialog_message = ref("");
 	let dialog_title = ref("");
+	let default_appointment_type = ref("");
 
 	const activeTab = ref(0);
 	let total_count = ref(0);
@@ -130,10 +116,10 @@
 	let no_show_count = ref(0);
 	let attending_count = ref(0);
 
-	let confirm_to_desk_dialog = ref(false);
 	let success_dialog = ref(false);
 	let alert_dialog = ref(false);
 	const viewControls = ref(null)
+	const make_appointment_dialog = ref(false);
 
 	const searchOptions = ref([]);
 	let all_appointments = ref([]);
@@ -147,6 +133,8 @@
 	let No_show_appointments = ref([]);
 	let attending_appointments = ref([]);
 
+	const defaults = reactive({})
+
 	const emit = defineEmits([
 		'update:search',
 		'patient_search',
@@ -157,12 +145,14 @@
 		'update:visitType',
 		'update:sort_by',
 	])
-	function confirm_to_desk() {
-		confirm_to_desk_dialog.value = true;
-	}
 
-	function go_to_desk_page(){
-		window.location.href = "/app";
+	const socket = inject("$socket");
+	if (socket) {
+		onMounted(() => {
+			socket.on("reload_waitlist", (data) => {
+				Appointmentlist.reload();
+			});
+		});
 	}
 
 	let appointment_tabs = computed(() => [
@@ -261,4 +251,27 @@
 	watch(sort_by, () => {
 		Appointmentlist.fetch();
 	});
+
+	function onBookClick() {
+		defaults["patient"] = patient_search?.value || {};
+		defaults["date"] = dateValue?.value || new Date().toISOString().split('T')[0];
+		defaults["practitioner"] = practitioner?.value || {};
+		defaults["appointment_type"] = visitType?.value || default_appointment_type.value;
+
+		make_appointment_dialog.value = true;
+	};
+
+	let get_default_appointment_type = createResource({
+		url: "/api/method/marley_frontend.waitlist.get_default_appointment",
+		method: "GET",
+		onSuccess(response) {
+			default_appointment_type.value = response
+		},
+		onError: (error) => {
+			dialog_message = error.messages?.[0] || error;
+			dialog_title = "Appointment Type fetching failed";
+			alert_dialog.value = true;
+		},
+	});
+	get_default_appointment_type.fetch();
 </script>

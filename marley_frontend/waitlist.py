@@ -102,12 +102,12 @@ def get_patients():
 	default_image = "/src/assets/UserIcon.svg"
 	for name in frappe.db.get_all(
 		"Patient",
-		fields=["name", "patient_name", "image", "phone"],
+		fields=["name", "patient_name", "image", "mobile"],
 		order_by="name ASC",
 	):
 		patients.append(
 			{
-				"label": f"{name.patient_name}, {name.phone}",
+				"label": f"{name.patient_name}, {name.mobile}",
 				"value": name.name,
 				"image": name.image or default_image,
 			}
@@ -260,7 +260,7 @@ def get_appointments(
 	if patient:
 		filters["patient"] = patient
 	if mobile:
-		patients = frappe.db.get_all("Patient", filters={"phone": ["like", f"%{mobile}%"]}, pluck="name")
+		patients = frappe.db.get_all("Patient", filters={"mobile": ["like", f"%{mobile}%"]}, pluck="name")
 		filters["patient"] = ["in", patients]
 
 	appointment_data = frappe.db.get_all(
@@ -306,9 +306,9 @@ def update_appointment(appointment_data, sort_by="Appointment Time"):
 		item["is_today"] = (
 			True if getdate() == getdate(item.appointment_date) else False
 		)
-		item["phone"] = str(
-			patient_doc.get("phone")
-			if patient_doc.get("phone")
+		item["mobile"] = str(
+			patient_doc.get("mobile")
+			if patient_doc.get("mobile")
 			else "Number Not Available"
 		)
 		item["age"] = str(
@@ -763,9 +763,8 @@ def patient_registration(
 	state=None,
 	zip=None,
 	source=None,
-	telecaller=None,
 	employee=None,
-	invite_user=False
+	file=None
 ):
 	first_name = None if first_name in undefined_conditions else first_name
 	last_name = None if last_name in undefined_conditions else last_name
@@ -780,25 +779,15 @@ def patient_registration(
 	state = None if state in undefined_conditions else state
 	zip = None if zip in undefined_conditions else zip
 	source = None if source in undefined_conditions else source
-	telecaller = None if telecaller in undefined_conditions else telecaller
 	employee = None if employee in undefined_conditions else employee
-	invite_user = False if invite_user in undefined_conditions else invite_user
-
-	new_lead = frappe.new_doc("Lead")
-	new_lead.first_name = first_name
-	new_lead.last_name = last_name
-	new_lead.gender = gender
-	new_lead.mobile_no = mobile
-	new_lead.save(ignore_permissions=True)
+	file = None if file in undefined_conditions else file
 
 	new_patient = frappe.new_doc("Patient")
 	new_patient.first_name = first_name
 	new_patient.last_name = last_name
 	new_patient.sex = gender
 	new_patient.email = email
-	new_patient.phone = mobile
-	new_patient.invite_user = invite_user if invite_user else False
-	new_patient.custom_lead = new_lead.name
+	new_patient.mobile = mobile
 	new_patient.dob = dob
 	new_patient.marital_status = marital_status
 	new_patient.address_line1 = addressLine1
@@ -808,20 +797,15 @@ def patient_registration(
 	new_patient.zip_code = zip
 	new_patient.custom_source = source
 	new_patient.custom_employee = employee if source == "Employee" else None
-	new_patient.custom_telecaller = telecaller if source == "Telecaller" else None
+	new_patient.image = file
 
 	new_patient.save(ignore_permissions=True)
-
-	new_lead.reload()
-	new_lead.status = "Converted"
-	new_lead.save(ignore_permissions=True)
-	image = "/src/assets/user.svg" if not new_patient.image else new_patient.image
 
 	return {
 		"status": "success",
 		"label": new_patient.patient_name,
 		"value": new_patient.name,
-		"image": image,
+		"image": new_patient.image,
 	}
 
 
@@ -1882,25 +1866,13 @@ def patient_appointment(from_kiosk=True):
 
 	new_appointment.patient = frappe.form_dict.get("patient")
 
-	practitioner = frappe.get_doc("Healthcare Practitioner",frappe.form_dict.get("practitioner"))
+	practitioner = frappe.get_doc("Healthcare Practitioner", frappe.form_dict.get("practitioner"))
 	new_appointment.practitioner = practitioner.name
 	new_appointment.department = practitioner.department
 	new_appointment.appointment_date = frappe.form_dict.get(
 		"date"
 	) or frappe.form_dict.get("daterangevalue")
 	new_appointment.appointment_time = frappe.form_dict.get("slot")
-
-	therapy_plan = None if frappe.form_dict.get("therapy_plan") in ["", "undefined", "null"] else frappe.form_dict.get("therapy_plan")
-	therapy = None if frappe.form_dict.get("therapy") in ["", "undefined", "null"] else frappe.form_dict.get("therapy")
-
-	if therapy_plan and therapy:
-		new_appointment.therapy_plan = therapy_plan
-		new_appointment.therapy_type = therapy
-		new_appointment.invoiced = 1
-
-	# Get procedure_template and therapy_plan from form_dict
-	new_appointment.procedure_template = frappe.form_dict.get("procedure_template")
-	new_appointment.therapy_plan = frappe.form_dict.get("therapy_plan")
 
 	date = frappe.utils.getdate(frappe.form_dict.get("date"))
 	weekday = date.strftime("%A")
@@ -1930,7 +1902,8 @@ def patient_appointment(from_kiosk=True):
 	new_appointment.paid_amount = practitioner_service["practitioner_charge"]
 
 	new_appointment.save(ignore_permissions=True)
-	frappe.publish_realtime("update_appointment_status")
+	frappe.publish_realtime("reload_waitlist")
+	frappe.publish_realtime("reload_practitioner_screen")
 
 	return {"status": "success", "appointment": new_appointment.name}
 
@@ -1943,7 +1916,7 @@ def update_patient():
 	patient.last_name = frappe.form_dict.get("lastname")
 	patient.sex = frappe.form_dict.get("gender")
 	patient.dob = frappe.form_dict.get("dob")
-	patient.phone = frappe.form_dict.get("mobile")
+	patient.mobile = frappe.form_dict.get("mobile")
 	patient.address_line1 = frappe.form_dict.get("address1")
 	patient.address_line2 = frappe.form_dict.get("address2")
 	patient.city = frappe.form_dict.get("city")
@@ -1965,7 +1938,7 @@ def get_current_patient_data(patient):
 	if (
 		patient_doc.first_name
 		and patient_doc.sex
-		and patient_doc.phone
+		and patient_doc.mobile
 		and patient_doc.dob
 		and patient_doc.address_line1
 		and patient_doc.zip_code

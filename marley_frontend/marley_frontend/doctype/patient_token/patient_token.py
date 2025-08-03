@@ -88,7 +88,7 @@ class PatientToken(Document):
 			if reqd_token_no:
 				self.next = reqd_token_no.get("next")
 				frappe.db.set_value("Patient Token", reqd_token_no.get("name"), "next", self.name, update_modified=False)
-				frappe.publish_realtime("update_appointment_status")
+				frappe.publish_realtime("reload_practitioner_screen")
 
 			self.save()
 
@@ -134,7 +134,7 @@ class PatientToken(Document):
 		frappe.db.set_value("Patient Token", self.next, "head", 1)
 		frappe.db.set_value(self.doctype, self.name, 'head', 0)
 		frappe.publish_realtime("update_tokens")
-		frappe.publish_realtime("update_appointment_status")
+		frappe.publish_realtime("reload_practitioner_screen")
 
 	@frappe.whitelist()
 	def check_out(self, queue_dn):
@@ -157,7 +157,7 @@ class PatientToken(Document):
 
 		self.save(ignore_permissions=True)
 		frappe.publish_realtime("update_tokens")
-		frappe.publish_realtime("update_appointment_status")
+		frappe.publish_realtime("reload_practitioner_screen")
 
 	@frappe.whitelist()
 	def no_show(self):
@@ -268,7 +268,7 @@ def insert_token(ref_doc, ref_name, service_unit=None, slot_position=None):
 		frappe.db.set_value("Patient Appointment", ref_name, "status", "Confirmed")     
 	frappe.db.commit()
 	frappe.publish_realtime("update_tokens")
-	frappe.publish_realtime("update_appointment_status")
+	frappe.publish_realtime("reload_practitioner_screen")
 
 
 # @frappe.whitelist()
@@ -475,8 +475,7 @@ def checkout_from_journey_stop(doc, method=None):
 			token.save(ignore_permissions=True)
 			frappe.publish_realtime("update_tokens")
 			frappe.publish_realtime("update_status")
-			frappe.publish_realtime("update_appointment_status")
-
+			frappe.publish_realtime("reload_practitioner_screen")
 		else:
 			return
 	else:

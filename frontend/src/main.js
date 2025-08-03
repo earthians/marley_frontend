@@ -28,6 +28,7 @@ import {
 	ListRow,
 	ListRowItem,
 	ListSelectBanner,
+	ListFooter,
 } from 'frappe-ui'
 
 let globalComponents = {
@@ -49,10 +50,18 @@ let globalComponents = {
 	ListRow,
 	ListRowItem,
 	ListSelectBanner,
+	ListFooter,
 }
 
 let app = createApp(App)
 setConfig('resourceFetcher', frappeRequest)
+app.use(FrappeUI)
+app.use(router)
+// app.use(resourcesPlugin)
+
+for (let key in globalComponents) {
+	app.component(key, globalComponents[key])
+}
 
 let socket
 if (import.meta.env.DEV) {
@@ -63,18 +72,10 @@ if (import.meta.env.DEV) {
 			}
 			socket = initSocket();
 			app.config.globalProperties.$socket = socket
-			app.provide("$socket", socket)
+			app.mount('#app')
 		},
 	)
 } else {
 	socket = initSocket();
-	app.provide("$socket", socket)
+	app.mount('#app')
 }
-// app.use(FrappeUI)
-app.use(resourcesPlugin)
-
-for (let key in globalComponents) {
-	app.component(key, globalComponents[key])
-}
-
-app.use(router).mount('#app')
