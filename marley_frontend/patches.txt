@@ -2,7 +2,5 @@
 marley_frontend.patches.create_razorpay_mode_of_payment
 
 [post_model_sync]
-marley_frontend.patches.create_custom_fields
 marley_frontend.patches.create_new_role_in_role
 marley_frontend.patches.set_service_unit_room_status
-marley_frontend.patches.set_registration_and_consultation_payment_status

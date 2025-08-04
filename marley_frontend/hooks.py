@@ -68,6 +68,15 @@ doctype_js = {
 # 	"Role": "home_page"
 # }
 
+fixtures = [
+    {
+        "dt": "Custom Field",
+        "filters": [
+            ["module", "=", "Marley Frontend"]
+        ]
+    }
+]
+
 # Generators
 # ----------
 
@@ -90,7 +99,7 @@ doctype_js = {
 # ------------
 
 # before_install = "marley_frontend.install.before_install"
-# after_install = "marley_frontend.install.after_install"
+after_install = "marley_frontend.install.after_install"
 
 # Uninstallation
 # ------------
@@ -245,3 +254,43 @@ scheduler_events = {
 # }
 
 website_route_rules = [{"from_route": "/healthcare/<path:app_path>", "to_route": "healthcare"},]
+
+standard_dropdown_items = [
+	{
+		"name1": "app_selector",
+		"label": "Apps",
+		"type": "Route",
+		"route": "#",
+		"is_standard": 1,
+	},
+	{
+		"name1": "toggle_theme",
+		"label": "Toggle theme",
+		"type": "Route",
+		"icon": "moon",
+		"route": "#",
+		"is_standard": 1,
+	},
+	{
+		"name1": "about",
+		"label": "About",
+		"type": "Route",
+		"icon": "info",
+		"route": "#",
+		"is_standard": 1,
+	},
+	{
+		"name1": "separator",
+		"label": "",
+		"type": "Separator",
+		"is_standard": 1,
+	},
+	{
+		"name1": "logout",
+		"label": "Log out",
+		"type": "Route",
+		"icon": "log-out",
+		"route": "#",
+		"is_standard": 1,
+	},
+]
