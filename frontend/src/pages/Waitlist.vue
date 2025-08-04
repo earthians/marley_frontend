@@ -39,6 +39,7 @@
 		<WaitlistTabs
 			v-model:tab="activeTab"
 			:appointment-tabs="appointment_tabs"
+			@reload_appointment="Appointmentlist.reload()"
 		/>
 	</div>
 	<AppointmentModal
@@ -146,14 +147,14 @@
 		'update:sort_by',
 	])
 
-	const socket = inject("$socket");
-	if (socket) {
-		onMounted(() => {
-			socket.on("reload_waitlist", (data) => {
-				Appointmentlist.reload();
-			});
-		});
-	}
+	// const socket = inject("$socket");
+	// if (socket) {
+	// 	onMounted(() => {
+	// 		socket.on("reload_waitlist", (data) => {
+	// 			Appointmentlist.reload();
+	// 		});
+	// 	});
+	// }
 
 	let appointment_tabs = computed(() => [
 		{ label: `All (${total_count.value})`, "name": "All", "appointments": all_appointments.value },

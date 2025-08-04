@@ -23,11 +23,13 @@ from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings impor
 	get_income_account,
 	get_receivable_account,
 )
+from healthcare.healthcare.doctype.patient_appointment.patient_appointment import update_status
 from healthcare.healthcare.utils import (
 	get_appointments_to_invoice,
 	get_clinical_procedures_to_invoice,
 	get_drugs_to_invoice,
 	get_encounters_to_invoice,
+	get_healthcare_services_to_invoice,
 	get_inpatient_services_to_invoice,
 	get_observations_to_invoice,
 	get_appointment_billing_item_and_rate,
@@ -309,7 +311,7 @@ def update_appointment(appointment_data, sort_by="Appointment Time"):
 		item["mobile"] = str(
 			patient_doc.get("mobile")
 			if patient_doc.get("mobile")
-			else "Number Not Available"
+			else patient_doc.get("phone") if patient_doc.get("phone") else "-"
 		)
 		item["age"] = str(
 			patient_doc.get("custom_age") if patient_doc.get("custom_age") else ""
@@ -326,6 +328,7 @@ def update_appointment(appointment_data, sort_by="Appointment Time"):
 			{"appointment": item.get("name"), "docstatus": ["!=", 2]},
 		)
 		item["has_encounter"] = False if has_encounter else True
+		item["encounter"] = has_encounter
 		item["has_token"] = False if item.patient_token else True
 		item["patient_id"] = patient_doc.get("name")
 		item["appointment_type"] = (
@@ -685,19 +688,19 @@ def get_booked_therapy_sessions_to_invoice(patient, company):
 
 def get_status_class(status):
 	status_dict = {
-		"Scheduled": "text-yellow-700",
-		"Open": "! text-orange-500",
-		"Expired": "text-gray-700",
-		"Cancelled": "text-red-800",
-		"Consulted": "text-green-700",
+		"Scheduled": "! text-yellow-600",
+		"Open": "! text-orange-600",
+		"Expired": "! text-surface-gray-8",
+		"Cancelled": "! text-red-600",
+		"Consulted": "! text-green-500",
 		"Checked In": "! text-blue-600",
-		"Attending": "! text-purple-400",
-		"Checked Out": "! text-orange-700",
-		"Confirmed": "text-green-700",
-		"No Show": "text-red-700",
+		"Attending": "! text-purple-600",
+		"Checked Out": "! text-orange-600",
+		"Confirmed": "! text-green-500",
+		"No Show": "! text-red-600",
 	}
 
-	return status_dict.get(status) if status_dict.get(status) else "text-black-700"
+	return status_dict.get(status) if status_dict.get(status) else "! text-black-700"
 
 
 def get_current_token_status(item):
@@ -843,7 +846,6 @@ def create_vitalsigns():
 		new_vital.vital_signs_note = frappe.form_dict.get("notes")
 		new_vital.bp_diastolic = frappe.form_dict.get("bp_diastolic")
 		new_vital.bp_systolic = frappe.form_dict.get("bp_systolic")
-		new_vital.custom_spo2 = frappe.form_dict.get("spo2")
 		new_vital.save(ignore_permissions=True)
 	else:
 		active_token = frappe.db.exists(
@@ -897,7 +899,6 @@ def create_vitalsigns():
 		new_vital.vital_signs_note = frappe.form_dict.get("notes")
 		new_vital.bp_diastolic = frappe.form_dict.get("bp_diastolic")
 		new_vital.bp_systolic = frappe.form_dict.get("bp_systolic")
-		new_vital.custom_spo2 = frappe.form_dict.get("spo2")
 		new_vital.save(ignore_permissions=True)
 
 	if new_vital.name:
@@ -1388,34 +1389,25 @@ def get_therapy_type(patient, therapy_plan):
 # get_patient company data success and encounter
 @frappe.whitelist(allow_guest=True)
 def get_patient_data_for_services(appointment):
-	encounters = []
 	patient_appointment = frappe.get_doc("Patient Appointment", appointment)
 
 	company = patient_appointment.company
 	customer = frappe.db.get_value("Patient", patient_appointment.patient, "customer")
 
-	# encounter getting of that patient
 	patient_encounters = frappe.db.get_all(
-		"Patient Encounter", filters={"patient": patient_appointment.patient}
+		"Medication Request",
+		filters={
+			"patient": patient_appointment.patient,
+			"status": "active-Medication Request Status",
+			"billing_status": ["!=", "Invoiced"],
+		},
+		fields=["order_group as label", "order_group as value"]
 	)
-
-	for enc in patient_encounters:
-		if frappe.db.exists(
-			"Drug Prescription",
-			{
-				"parent": enc.name,
-				"parentfield": "drug_prescription",
-				"parenttype": "Patient Encounter",
-			},
-		):
-			encounters.append({"label": enc.name, "value": enc.name})
 
 	return {
 		"company": company,
-		"patient_name": patient_appointment.patient_name,
 		"customer": customer,
-		"patient_id": patient_appointment.patient,
-		"Patient_encounters": encounters,
+		"patient_encounters": patient_encounters
 	}
 
 
@@ -1480,12 +1472,13 @@ def create_services_sales_invoice(
 	else:
 		sales_invoice.allocate_advances_automatically = 0
 	if payments:
+		sales_invoice.is_pos = 1
 		for pay in payments:
-			payment = sales_invoice.append("custom_invoice_payments", {})
+			payment = sales_invoice.append("payments", {})
 			payment.mode_of_payment = pay.get("mode_of_payment")
 			payment.amount = flt(pay.get("amount"))
 			payment.reference_no = pay.get("ref_id")
-			payment.reference_date = getdate(pay.get("ref_date"))
+			payment.clearance_date = getdate(pay.get("ref_date"))
 
 	# sales_invoice.set_missing_values(for_validate=True)
 	sales_invoice.flags.ignore_mandatory = True
@@ -1499,7 +1492,7 @@ def create_services_sales_invoice(
 
 # get healthcare services list
 @frappe.whitelist(allow_guest=True)
-def get_service_list(patient, company):
+def get_service_list(patient, customer, company):
 	all_services = []
 
 	if (
@@ -1519,7 +1512,7 @@ def get_service_list(patient, company):
 				"rate": fee,
 			}
 		)
-	services_to_invoice = get_healthcare_services_to_invoice(patient, company)
+	services_to_invoice = get_healthcare_services_to_invoice(patient, customer, company)
 
 	if services_to_invoice and len(services_to_invoice):
 		all_services += services_to_invoice
@@ -1547,19 +1540,9 @@ def get_service_list(patient, company):
 			item["qty"] = str(flt(item.get("qty"), 3))
 
 		if not item.get("reference_type") == "Patient":
-			if item.get("reference_type") == "Therapy Session":
-				item["rate"] = str(flt(
-					get_therapy_session_rate_from_cost_counselling(
-						item.get("reference_name")
-					), 3)
-					or str(flt(
-						price[0].get("price_list_rate") if price and len(price) else 0
-					), 3)
-				)
-			else:
-				item["rate"] = str(
-					price[0].get("price_list_rate") if price and len(price) else 0
-				)
+			item["rate"] = str(
+				price[0].get("price_list_rate") if price and len(price) else 0
+			)
 			item["posting_date"] = format_date(
 				getdate(
 					frappe.db.get_value(
@@ -1574,7 +1557,7 @@ def get_service_list(patient, company):
 			item["posting_date"] = ""
 			item["rate"] = str(item.get("rate"))
 
-	return {"services_to_invoice": all_services}
+	return all_services
 
 
 def get_therapy_session_rate_from_cost_counselling(session=None):
@@ -1600,19 +1583,19 @@ def get_therapy_session_rate_from_cost_counselling(session=None):
 					return None
 
 
-def get_healthcare_services_to_invoice(patient, company):
-	patient = frappe.get_doc("Patient", patient)
-	items_to_invoice = []
-	if patient:
-		items_to_invoice += get_appointments_to_invoice(patient, company)
-		items_to_invoice += get_encounters_to_invoice(patient, company)
-		items_to_invoice += get_clinical_procedures_to_invoice(patient, company)
-		items_to_invoice += get_inpatient_services_to_invoice(patient, company)
-		items_to_invoice += get_therapy_sessions_to_invoice(patient, company)
-		items_to_invoice += get_service_requests_to_invoice(patient, company)
-		items_to_invoice += get_observations_to_invoice(patient, company)
+# def get_healthcare_services_to_invoice(patient, company):
+# 	patient = frappe.get_doc("Patient", patient)
+# 	items_to_invoice = []
+# 	if patient:
+# 		items_to_invoice += get_appointments_to_invoice(patient, company)
+# 		items_to_invoice += get_encounters_to_invoice(patient, company)
+# 		items_to_invoice += get_clinical_procedures_to_invoice(patient, company)
+# 		items_to_invoice += get_inpatient_services_to_invoice(patient, company)
+# 		items_to_invoice += get_therapy_sessions_to_invoice(patient, company)
+# 		items_to_invoice += get_service_requests_to_invoice(patient, company)
+# 		items_to_invoice += get_observations_to_invoice(patient, company)
 
-		return items_to_invoice
+# 		return items_to_invoice
 
 
 def get_therapy_sessions_to_invoice(patient, company):
@@ -1769,51 +1752,24 @@ def get_user_role():
 
 # status
 @frappe.whitelist(allow_guest=True)
-def set_status(id, status, cancel_reason=None):
-	cancel_reason = None if cancel_reason in undefined_conditions else cancel_reason
+def set_status(id, status):
 	appointment = frappe.get_doc("Patient Appointment", id)
 	if status == "Checked In":
-		# Fetch patient's payment entry status
-		payment_entry_created, invoiced = frappe.db.get_value(
-			"Patient", appointment.patient, ["payment_entry_created", "invoiced"]
-		)
-
-		if not (payment_entry_created or invoiced) or not (appointment.custom_consultation_paid or appointment.invoiced):
-			is_billable = check_is_billable(appointment)
-			if is_billable:
-				return {
-					"alert": "Check-in is not allowed. Registration / Consultation Payment is pending"
-				}
-
-		# Fetch service unit
 		service_unit = frappe.db.get_value(
 			"Medical Department", appointment.department, "service_unit"
 		)
 
-		# Check if user has required roles
-		has_role = get_user_role()
-
-		if "Vitals User" in has_role.get("roles") or "Receptionist" in has_role.get(
-			"roles"
-		):
-			message = check_and_insert_token(
-				"Patient Appointment",
-				id,
-				appointment.patient,
-				appointment,
-				service_unit,
-			)
-			if message:
-				return message
-		else:
-			return {
-				"alert": "Only Receptionist or Vitals User can change check-in status."
-			}
+		message = check_and_insert_token(
+			"Patient Appointment",
+			id,
+			appointment.patient,
+			appointment,
+			service_unit,
+		)
+		if message:
+			return message
 	else:
-		frappe.db.set_value("Patient Appointment", id, {
-			"status": status,
-			"custom_cancel_reason": cancel_reason
-		})
+		update_status(id, status)
 		return {
 			"message": f"Patient {appointment.patient_name} has {status} Appointment {id}"
 		}

@@ -1,4 +1,5 @@
 import frappeUIPreset from 'frappe-ui/src/tailwind/preset'
+const colors = require('tailwindcss/colors')
 
 export default {
   presets: [frappeUIPreset],
@@ -12,7 +13,15 @@ export default {
   ],
   safelist: [{ pattern: /!(text|bg)-/, variants: ['hover', 'active'] }],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        ...colors
+      },
+      fontSize: {
+        'vl': '7rem',
+        'xss': '10px'
+      },
+    },
   },
   plugins: [],
 }
