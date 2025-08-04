@@ -8,8 +8,25 @@ You can install this app using the [bench](https://github.com/frappe/bench) CLI:
 
 ```bash
 cd $PATH_TO_YOUR_BENCH
-bench get-app $URL_OF_THIS_REPO --branch develop
+bench get-app https://github.com/earthians/marley_frontend.git --branch develop
 bench install-app marley_frontend
+```
+
+then,
+
+```bash
+bench setup requirements
+bench build
+bench --site <your site> migrate
+```
+
+The healthcare frontend pages will available on `<site>/healthcare`
+
+or
+
+```bash
+cd app/marley_frontend
+yarn dev
 ```
 
 ### Contributing
