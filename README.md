@@ -1,6 +1,6 @@
 ### Marley Frontend
 
-Frontend UI application for healthcare workflows built on top of the Marley Healthcare app. Provides Frappe UI-based pages for patient, doctor, and clinic interactions.
+Frontend for Marley Healthcare
 
 ### Installation
 
@@ -8,49 +8,31 @@ You can install this app using the [bench](https://github.com/frappe/bench) CLI:
 
 ```bash
 cd $PATH_TO_YOUR_BENCH
-bench get-app https://github.com/earthians/marley_frontend.git --branch develop
-bench install-app marley_frontend
+bench get-app https://github.com/earthians/marley_frontend.git
 ```
 
-then,
+install ERP Next and Marley Healthcare to the site. Then,
 
+```bash
+bench --site demo.com install-app marley_frontend
+```
 ```bash
 bench setup requirements
 bench build
-bench --site <your site> migrate
+bench --site demo.com migrate
 ```
 
-The healthcare frontend pages will available on `<site>/healthcare`
+The healthcare frontend pages will available on `demo.com/healthcare`
 
-or
+#### For Frontend Development
 
-```bash
-cd app/marley_frontend
-yarn dev
-```
+1. Open a new terminal session and cd into frappe-bench/apps/marley_frontend, and run the following commands:
 
-### Contributing
-
-This app uses `pre-commit` for code formatting and linting. Please [install pre-commit](https://pre-commit.com/#installation) and enable it for this repository:
-
-```bash
-cd apps/marley_frontend
-pre-commit install
-```
-
-Pre-commit is configured to use the following tools for checking and formatting your code:
-
-- ruff
-- eslint
-- prettier
-- pyupgrade
-### CI
-
-This app can use GitHub Actions for CI. The following workflows are configured:
-
-- CI: Installs this app and runs unit tests on every push to `develop` branch.
-- Linters: Runs [Frappe Semgrep Rules](https://github.com/frappe/semgrep-rules) and [pip-audit](https://pypi.org/project/pip-audit/) on every pull request.
-
+    ```bash
+    yarn install
+    yarn dev
+    ```
+2. Now, you can access the site on vite dev server at http://localhost:8080
 
 ### License
 

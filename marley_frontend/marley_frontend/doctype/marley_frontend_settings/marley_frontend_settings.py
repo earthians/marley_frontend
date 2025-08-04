@@ -9,8 +9,6 @@ from frappe.model.document import Document
 class MarleyFrontendSettings(Document):
 	def validate(self):
 		self.do_not_allow_to_delete_if_standard()
-		self.setup_forecasting()
-		self.make_currency_read_only()
 
 	def do_not_allow_to_delete_if_standard(self):
 		if not self.has_value_changed("dropdown_items"):
