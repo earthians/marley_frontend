@@ -114,7 +114,7 @@ const allViews = computed(() => {
       to: 'QueueSelection',
     },
     {
-      label: 'Kiosk',
+      label: 'Patient Self Service',
       icon: KioskIcon,
       to: 'Kiosk',
     },
