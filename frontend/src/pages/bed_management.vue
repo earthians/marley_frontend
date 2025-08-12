@@ -1,5 +1,5 @@
 <template>
-	<div class="relative w-full h-full bg-surface-white">
+	<div class="w-full h-full bg-surface-white">
 		<div class="flex p-4 items-center border-b border">
 			<div class="p-4 w-1/4">
 				<Autocomplete :options=type_options placeholder="Room Type" v-model="room_type_filter" size="sm">
@@ -45,9 +45,9 @@
 			</div>
 		</div>
 
-		<div class="h-full flex">
+		<div class="h-[calc(95vh-64px)] flex">
 			<!-- Left Panel: Bed Layout -->
-			<div class="w-3/4 p-6">
+			<div class="w-3/4 p-6 overflow-y-auto">
 				<div v-for="(ward, index) in item_list" :key="index" class="mb-6">
 					<h2 class="text-gray-500 font-bold text-lg mb-3">{{ ward.room_type_details }}</h2>
 					<div class="grid grid-cols-6 gap-3">
@@ -66,7 +66,7 @@
 			</div>
 
 			<!-- Right Panel: Bed Details & Allocation -->
-			<div class="w-1/4 p-6 shadow-lg border rounded-lg">
+			<div class="w-1/4 h-[calc(96vh-64px)] p-6 shadow-lg border rounded-lg">
 				<div v-if="selectedBed.name">
 					<div class="flex justify-left mt-5 py-1 gap-2">
 						<span class="px-3 py-1 text-xs font-bold rounded-md" :class="{
