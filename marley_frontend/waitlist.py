@@ -109,7 +109,7 @@ def get_patients():
 	):
 		patients.append(
 			{
-				"label": f"{name.patient_name}, {name.mobile}",
+				"label": f"{name.patient_name}, {name.mobile or ''}",
 				"value": name.name,
 				"image": name.image or default_image,
 			}

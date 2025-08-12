@@ -99,8 +99,8 @@
 	const department = ref("");
 	const practitioner = ref("");
 	const visitType = ref("");
-	const sort_by = ref("");
-	const dateValue = ref("");
+	const sort_by = ref("Appointment Time");
+	const dateValue = ref(new Date().toISOString().split('T')[0]);
 	let dialog_message = ref("");
 	let dialog_title = ref("");
 	let default_appointment_type = ref("");

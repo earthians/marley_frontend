@@ -171,81 +171,82 @@
 										</div>
 									</div>
 									<div v-if="column.key === 'actions'">
-										<div class="flex-1 px-1 py-1 justify-center items-center flex space-x-1">
-											<Button :variant="'outline'" :ref_for="true" theme="gray" size="md"
-												label="Create Vitals" :disabled="row.has_token" @click="openVitalsDialogue(row)">
-												<div class="flex items-center truncate">
-													<Tooltip :text="'Add Vitals'" placement="top">
+										<div class="border rounded-md">
+											<div class="flex-1 px-1 py-1 justify-center items-center flex space-x-1">
+												<Button :ref_for="true" theme="ghost" size="md"
+													label="Create Vitals" :disabled="row.has_token" @click="openVitalsDialogue(row)">
+													<div class="flex items-center truncate">
+														<Tooltip :text="'Add Vitals'" placement="top">
+															<slot name="icon">
+																<FeatherIcon :name="'activity'"
+																	class="size-5 text-ink-gray-7" />
+															</slot>
+														</Tooltip>
+													</div>
+												</Button>
+												<Button
+													:ref_for="true" theme="ghost" size="md" label="Goto Encounter"
+													:disabled="row.has_encounter"
+													@click="navigateToDoctype(row.encounter)">
+													<Tooltip :text="'Go to Encounter'" placement="top">
 														<slot name="icon">
-															<FeatherIcon :name="'activity'"
+															<FeatherIcon :name="'plus-square'"
 																class="size-5 text-ink-gray-7" />
 														</slot>
 													</Tooltip>
-												</div>
-											</Button>
-											<Button :variant="'outline'"
-												:ref_for="true" theme="gray" size="md" label="Goto Encounter"
-												:disabled="row.has_encounter"
-												@click="navigateToDoctype(row.encounter)">
-												<Tooltip :text="'Go to Encounter'" placement="top">
-													<slot name="icon">
-														<FeatherIcon :name="'plus-square'"
-															class="size-5 text-ink-gray-7" />
-													</slot>
-												</Tooltip>
-											</Button>
-											<!-- <Button :variant="'outline'"
-												:ref_for="true" theme="gray" size="sm" label="payment_button"
-												:loading="false" :loadingText="null" :link="null" @click="open_payment_dialog(row)">
-												<Tooltip :text="'Consultation Payment'" placement="top">
-													<slot name="icon">
-														<FeatherIcon :name="'credit-card'"
-															class="size-4 text-ink-gray-7" />
-													</slot>
-												</Tooltip>
-											</Button> -->
-											<Button :variant="'outline'" :ref_for="true" theme="gray" size="md"
-												label="reschedule_button" :disabled="false"
-												@click="rescheduleAppointment(row)">
-												<Tooltip :text="'Reschedule'" placement="top">
-													<FeatherIcon :name="'calendar'" class="size-5 text-ink-gray-7" />
-												</Tooltip>
-											</Button>
-											<Button :variant="'outline'" :ref_for="true" theme="gray" size="md"
-												label="Print Boarding Pass" :disabled="row.has_token" @click="print_boarding_pass(row)">
-												<div class="flex items-center truncate">
-													<Tooltip :text="'Print Boarding Pass'" placement="top">
+												</Button>
+												<!-- <Button
+													:ref_for="true" theme="ghost" size="sm" label="payment_button"
+													:loading="false" :loadingText="null" :link="null" @click="open_payment_dialog(row)">
+													<Tooltip :text="'Consultation Payment'" placement="top">
 														<slot name="icon">
-															<FeatherIcon :name="'printer'"
+															<FeatherIcon :name="'credit-card'"
+																class="size-4 text-ink-gray-7" />
+														</slot>
+													</Tooltip>
+												</Button> -->
+												<Button :ref_for="true" theme="ghost" size="md"
+													label="reschedule_button" :disabled="false"
+													@click="rescheduleAppointment(row)">
+													<Tooltip :text="'Reschedule'" placement="top">
+														<RescheduleIcon class="size-5 text-ink-gray-7"></RescheduleIcon>
+													</Tooltip>
+												</Button>
+												<Button :ref_for="true" theme="ghost" size="md"
+													label="Print Boarding Pass" :disabled="row.has_token" @click="print_boarding_pass(row)">
+													<div class="flex items-center truncate">
+														<Tooltip :text="'Print Boarding Pass'" placement="top">
+															<slot name="icon">
+																<FeatherIcon :name="'printer'"
+																	class="size-5 text-ink-gray-7" />
+															</slot>
+														</Tooltip>
+													</div>
+												</Button>
+											</div>
+											<hr>
+											<div class="flex-1 px-1 py-1 flex justify-center items-center space-x-2">
+												<Button
+													:ref_for="true" theme="ghost" size="md"
+													label="Invoice Services" @click="open_healthcare_service(row)">
+													<Tooltip :text="'Invoice Services'" placement="top">
+														<slot name="icon">
+															<FeatherIcon :name="'dollar-sign'"
 																class="size-5 text-ink-gray-7" />
 														</slot>
 													</Tooltip>
-												</div>
-											</Button>
-										</div>
-										<hr>
-										<div class="flex-1 px-1 py-1 flex justify-center items-center space-x-2">
-											<Button
-												:variant="'outline'" :ref_for="true" theme="gray" size="md"
-												label="Invoice Services" @click="open_healthcare_service(row)">
-												<Tooltip :text="'Invoice Services'" placement="top">
-													<slot name="icon">
-														<FeatherIcon :name="'dollar-sign'"
-															class="size-5 text-ink-gray-7" />
-													</slot>
-												</Tooltip>
-											</Button>
-											<Button :variant="'outline'" :ref_for="true" theme="gray" size="md"
-												label="Invoice Prescription" @click="open_prescription_dialog(row)">
-												<div class="flex items-center truncate">
-													<Tooltip :text="'Invoice Prescriptions'" placement="top">
-														<slot name="icon">
-															<FeatherIcon :name="'link'"
-																class="size-5 text-ink-gray-7" />
-														</slot>
-													</Tooltip>
-												</div>
-											</Button>
+												</Button>
+												<Button :ref_for="true" theme="ghost" size="md"
+													label="Invoice Prescription" @click="open_prescription_dialog(row)">
+													<div class="flex items-center truncate">
+														<Tooltip :text="'Invoice Prescriptions'" placement="top">
+															<slot name="icon">
+																<PillIcon class="size-5 text-ink-gray-7"></PillIcon>
+															</slot>
+														</Tooltip>
+													</div>
+												</Button>
+											</div>
 										</div>
 									</div>
 									<div v-if="column.key == 'patient_balance'">
@@ -877,6 +878,9 @@
 		Tabs,
 		DatePicker
 	} from "frappe-ui"
+
+	import RescheduleIcon from '~icons/lucide/calendar-sync'
+	import PillIcon from '~icons/lucide/pill'
 
 	const activeTab = defineModel('tab');
 	defineProps({
