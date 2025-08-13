@@ -1896,6 +1896,10 @@
 		});
 		fetch_mode_type.fetch();
 	}
+
+	function print_sales_invoice(sales_invoice_ref) {
+		window.open("/app/print/Sales Invoice/" + sales_invoice_ref, "_blank");
+	}
 </script>
 
 <style scoped>
