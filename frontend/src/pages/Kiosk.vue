@@ -153,6 +153,7 @@
 		:errors="errors"
 		:genderOptions="genderOptions"
 		@confirm="handleConfirm"
+		@skip="handleSkip"
 	/>
 </template>
 
@@ -464,6 +465,11 @@
 		} else {
 			updateDetails.submit();
 		}
+	};
+
+	const handleSkip = () => {
+		complete_profile_dialog.value = false;
+		get_appointment.fetch();
 	};
 
 	// update patient details before booking

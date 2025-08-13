@@ -70,6 +70,7 @@
 
 			<template #actions>
 				<Button variant="solid" @click="handleConfirm">Confirm</Button>
+				<Button class="ml-2" variant="subtle" @click="handleSkip">Skip</Button>
 			</template>
 		</Dialog>
 	</div>
@@ -99,6 +100,7 @@
 	const emit = defineEmits([
 		'update:modelValue',
 		'confirm',
+		'skip',
 		'update:form_firstName',
 		'update:form_lastName',
 		'update:form_gender',
@@ -116,5 +118,9 @@
 
 	function handleConfirm() {
 		emit('confirm');
+	}
+
+	function handleSkip() {
+		emit('skip');
 	}
 </script>
