@@ -38,6 +38,7 @@
 								:disabled="false"
 								:required="true"
 								:label="'Date of Birth'"
+								:formatter="(date) => getFormat(date, '', true)"
 							/>
 							<ErrorMessage v-if="errors.form_dob" :message="errors.form_dob" />
 						</div>
@@ -80,6 +81,7 @@
 	import { Button, DatePicker, Dialog, ErrorMessage } from "frappe-ui";
 	import FormControlWrapper  from '@/components/FormControlWrapper.vue';
 	import { ref } from "vue";
+	import { getFormat } from '@/utils'
 
 	const props = defineProps({
 		modelValue: Boolean,

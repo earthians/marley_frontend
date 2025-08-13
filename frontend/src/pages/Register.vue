@@ -156,6 +156,7 @@
 						:disabled="false"
 						:required="false"
 						label="Date of Birth"
+						:formatter="(date) => getFormat(date, '', true)"
 					/>
 					<ErrorMessage v-if="errors.dob" :message="errors.dob" />
 				</div>
@@ -262,6 +263,7 @@
 	import { useRouter } from "vue-router";
 	import LanguageSelector from '@/components/LanguageSelector.vue';
 	import Footer from '@/components/Footer.vue';
+	import { getFormat } from '@/utils'
 
 	const firstname = ref("");
 	const lastname = ref("");

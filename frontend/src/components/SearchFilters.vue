@@ -55,6 +55,7 @@
 				variant="subtle"
 				placeholder="Date"
 				:disabled="false"
+				:formatter="(date) => getFormat(date, '', true)"
 				@update:v-model="(val) => emit('update:dateValue', val)"
 			/>
 		</div>
@@ -111,6 +112,7 @@
 </template>
 
 <script setup>
+	import { getFormat } from '@/utils'
 	defineProps({
 		searchOptions: Array,
 	})

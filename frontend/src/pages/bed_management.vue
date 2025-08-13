@@ -30,7 +30,7 @@
 					v-model="status_filter" size="sm" />
 			</div>
 			<div class="w-1/5">
-				<DatePicker v-model="date_filter" variant="subtle" placeholder="Date" :disabled="false" />
+				<DatePicker v-model="date_filter" variant="subtle" placeholder="Date" :disabled="false" :formatter="(date) => getFormat(date, '', true)" />
 			</div>
 			<div class="p-1">
 				<Button :ref_for="true" theme="gray" label="Clear Filters" :disabled="false" @click="clear_filters()">
@@ -269,7 +269,7 @@
 						<div class="py-1 w-full">
 							<DateTimePicker v-model="allocate_admission_date" variant="subtle"
 								placeholder="Admission Date" label="Admission Date" :disabled="false"
-								:required="true" />
+								:required="true" :formatter="(date) => getFormat(date, '', true, true)" />
 							<ErrorMessage v-if="errors.allocate_admission_date"
 								:message="errors.allocate_admission_date" />
 						</div>
@@ -490,6 +490,7 @@
 		ErrorMessage,
 		Switch,
 	} from "frappe-ui";
+	import { getFormat } from '@/utils'
 
 	// master options
 	let service_unit_options = ref([]);

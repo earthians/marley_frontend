@@ -465,7 +465,8 @@
 						v-model="reschedule_practitioner_id" />
 				</div>
 				<div class="flex-1 w-auto py-2">
-					<DatePicker v-model="reschedule_date" variant="subtle" label="Select Date" placeholder="Select Date" :disabled="false" />
+					<DatePicker v-model="reschedule_date" variant="subtle" label="Select Date" placeholder="Select Date" :disabled="false"
+						:formatter="(date) => getFormat(date, '', true)" />
 				</div>
 			</div>
 			<div v-if="slots.length" class="py-2 px-2">
@@ -633,6 +634,7 @@
 						:disabled="!is_bank"
 						:required="is_bank"
 						label="Reference Date"
+						:formatter="(date) => getFormat(date, '', true)"
 					/>
 					<ErrorMessage v-if="errors.reference_date_service" :message="errors.reference_date_service" />
 				</div>
@@ -878,6 +880,7 @@
 		Tabs,
 		DatePicker
 	} from "frappe-ui"
+	import { getFormat } from '@/utils'
 
 	import RescheduleIcon from '~icons/lucide/calendar-sync'
 	import PillIcon from '~icons/lucide/pill'

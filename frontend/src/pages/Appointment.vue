@@ -48,6 +48,7 @@
 							:disabled="false"
 							:required="true"
 							:label=translations.pickDate[selectedLanguage]
+							:formatter="(date) => getFormat(date, '', true)"
 						/>
 					</div>
 				</div>
@@ -155,6 +156,7 @@
 	import LanguageSelector from '@/components/LanguageSelector.vue';
 	import Footer from '@/components/Footer.vue';
 	import CompleteProfileDialog from '@/components/CompleteProfileDialog.vue';
+	import { getFormat } from '@/utils'
 
 	const router = useRouter();
 	let selectedLanguage = ref(localStorage.getItem("selectedLanguage") || "en");

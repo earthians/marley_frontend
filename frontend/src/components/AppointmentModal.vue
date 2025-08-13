@@ -52,7 +52,7 @@
 						<ErrorMessage v-if="errors.appointment_type" :message="errors.appointment_type"/>
 					</div>
 					<div class="py-1 w-full">
-						<DatePicker v-model="date" label="Appointment Date" variant="subtle" placeholder="Select Date" :required="true" />
+						<DatePicker v-model="date" label="Appointment Date" variant="subtle" placeholder="Select Date" :required="true" :formatter="(date) => getFormat(date, '', true)" />
 						<ErrorMessage v-if="errors.date" :message="errors.date"/>
 					</div>
 				</div>
@@ -112,6 +112,7 @@
 							placeholder="Date of Birth"
 							:disabled="false"
 							label="Date of Birth"
+							:formatter="(date) => getFormat(date, '', true)"
 						/>
 					</div>
 				</div>
@@ -183,6 +184,7 @@
 <script setup>
 	import { ref, watch } from 'vue'
 	import { createResource, Switch, DatePicker, ErrorMessage } from "frappe-ui"
+	import { getFormat } from '@/utils'
 
 	const props = defineProps({
 		defaults: Object,
