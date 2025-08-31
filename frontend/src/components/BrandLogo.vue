@@ -7,8 +7,9 @@
 <script setup>
 	import { ref } from 'vue';
 	import { createResource } from 'frappe-ui';
+	import defaultLogo from '@/assets/MH-logo.svg'
 
-	const logo = ref("/src/assets/MH-logo.svg");
+	const logo = ref(defaultLogo);
 
 	const getLogo = createResource({
 		url: "/api/method/marley_frontend.api.get_logo_image",

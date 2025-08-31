@@ -164,6 +164,7 @@
 	import LanguageSelector from '@/components/LanguageSelector.vue';
 	import Footer from '@/components/Footer.vue';
 	import CompleteProfileDialog from '@/components/CompleteProfileDialog.vue';
+	import defaultLogo from '@/assets/MH-logo.svg'
 
 	let patient_id = ref("");
 	let dialog = ref(false);
@@ -192,7 +193,7 @@
 	let form_zip = ref("");
 	let genderOptions = ref([]);
 
-	let brand = ref("/src/assets/MH-logo.svg");
+	const brand = ref(defaultLogo);
 	let get_brand_image = createResource({
 		url:"/api/method/marley_frontend.api.get_brand_image",
 		method: "GET",
