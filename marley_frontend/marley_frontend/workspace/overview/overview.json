@@ -1,0 +1,93 @@
+{
+ "app": "marley_frontend",
+ "charts": [],
+ "content": "[{\"id\":\"cQuk2I3dbf\",\"type\":\"header\",\"data\":{\"text\":\"<b>PORTAL</b>\",\"col\":12}},{\"id\":\"-uUmRCKJCY\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Appointment Desk\",\"col\":4}},{\"id\":\"4n4ciCQb-k\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Bed Management\",\"col\":4}},{\"id\":\"fcnBFVR49u\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Kiosk\",\"col\":4}},{\"id\":\"RZ2C1S0Qxl\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Queue Display\",\"col\":4}},{\"id\":\"THHpeq55Ib\",\"type\":\"paragraph\",\"data\":{\"text\":\"Doctypes &amp; Settings\",\"col\":12}},{\"id\":\"M7wktSIH4R\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient Token\",\"col\":4}},{\"id\":\"ErnJXF1yEa\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"TV Screen Advertisement\",\"col\":4}},{\"id\":\"tN4nBNliNL\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Marley Frontend Settings\",\"col\":4}},{\"id\":\"rQ7RZyK9Mj\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Healthcare Settings\",\"col\":4}}]",
+ "creation": "2025-10-07 16:15:47.610394",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "healthcare",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Overview",
+ "link_type": "DocType",
+ "links": [],
+ "modified": "2025-10-07 16:28:27.973546",
+ "modified_by": "Administrator",
+ "module": "Marley Frontend",
+ "name": "Overview",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 23.0,
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Appointment Desk",
+   "type": "URL",
+   "url": "/healthcare/waitlist"
+  },
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "format": "{} Active",
+   "label": "Patient Token",
+   "link_to": "Patient Token",
+   "stats_filter": "[[\"Patient Token\",\"status\",\"!=\",\"Expired\",false]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Bed Management",
+   "type": "URL",
+   "url": "/healthcare/bed_management"
+  },
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "format": "{}",
+   "label": "TV Screen Advertisement",
+   "link_to": "TV Screen Advertisement",
+   "stats_filter": "[[\"TV Screen Advertisement\",\"enabled\",\"=\",1,false]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Kiosk",
+   "type": "URL",
+   "url": "/healthcare/kiosk"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Marley Frontend Settings",
+   "link_to": "Marley Frontend Settings",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Queue Display",
+   "type": "URL",
+   "url": "/healthcare/QueueSelection"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Healthcare Settings",
+   "link_to": "Healthcare Settings",
+   "type": "DocType"
+  }
+ ],
+ "title": "Overview",
+ "type": "Workspace"
+}

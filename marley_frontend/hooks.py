@@ -1,7 +1,7 @@
 app_name = "marley_frontend"
 app_title = "Marley Frontend"
 app_publisher = "earthians Health Informatics Pvt. Ltd"
-app_description = "Frontend UI application for healthcare workflows built on top of the Marley Healthcare app. Provides Frappe UI-based pages for patient, doctor, and clinic interactions."
+app_description = "Frontend UI application for Marley Healthcare app"
 app_email = "info@earthianslive.com"
 app_license = "mit"
 
@@ -11,15 +11,15 @@ app_license = "mit"
 required_apps = ["healthcare"]
 
 # Each item in the list will be shown as an app in the apps page
-# add_to_apps_screen = [
-# 	{
-# 		"name": "marley_frontend",
-# 		"logo": "/assets/marley_frontend/logo.png",
-# 		"title": "Marley Frontend",
-# 		"route": "/marley_frontend",
-# 		"has_permission": "marley_frontend.api.permission.has_app_permission"
-# 	}
-# ]
+add_to_apps_screen = [
+	{
+		"name": "marley_frontend",
+		"logo": "/assets/healthcare/images/healthcare.svg",
+		"title": "Marley Frontend",
+		"route": "/app/marley_frontend",
+		"has_permission": "erpnext.check_app_permission"
+	}
+]
 
 # Includes in <head>
 # ------------------
