@@ -22,7 +22,9 @@ bench build
 bench --site demo.com migrate
 ```
 
-The healthcare frontend pages will available on `demo.com/healthcare`
+### Frontend UI
+The healthcare frontend pages will available on `demo.com/healthcare`.
+Also pages will be listed on workspace `demo.com/app/marley-frontend`
 
 #### For Frontend Development
 
