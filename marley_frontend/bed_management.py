@@ -213,6 +213,7 @@ def get_room_details(**args):
 			FROM
 				`tabInpatient Record` as ip
 			WHERE
+				ip.admission_service_unit={frappe.db.escape(su.name)} and
 				ip.status='Admission Scheduled' and
 				ip.company = {frappe.db.escape(company)} and
 				DATE(ip.admission_ordered_for) <= DATE({frappe.db.escape(get_date_str(args.date_filter))}) and
@@ -301,6 +302,7 @@ def order_admission(
 		"secondary_practitioner": secondary_consultant,
 		"admission_ordered_for": admission_date,
 		"admission_service_unit_type": bed_type,
+		"admission_service_unit": bed,
 		"treatment_plan_template": None,
 		"expected_length_of_stay": int(expected_length_of_stay),
 		"expected_discharge": add_to_date(admission_date, days=int(expected_length_of_stay)) if int(expected_length_of_stay) > 0 else None,

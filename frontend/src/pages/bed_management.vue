@@ -124,7 +124,7 @@
 						<div class="space-y-1 text-gray-600 text-sm sm:text-base mt-2">
 							<p><b>Patient: </b> {{ selectedBed.patient_name }}</p>
 							<p class="mt-1"><b>Encounter: </b> {{ selectedBed.admission_encounter }}</p>
-							<p class="mt-1"><b>Practitioner: </b> {{ selectedBed.practitioner_name }}</p>
+							<p class="mt-1"><b>Practitioner: </b> {{ selectedBed.primary_practitioner }}</p>
 							<p class="mt-1">
 								<b>IPD: </b>
 								<button class="text-blue-600 underline" @click="navigate_to_ip(selectedBed.ip_record)">
@@ -580,14 +580,14 @@
 	// dialog fields
 	let allocate_admission_date = ref(new Date().toLocaleString('sv-SE').replace('T', ' '));
 	let allocate_patient_id = ref("");
-	let allocate_patient = ref("");
-	let allocate_primary_consultant = ref("");
-	let allocate_secondary_consultant = ref("");
+	let allocate_patient = ref({label: '', value: ''});
+	let allocate_primary_consultant = ref({label: '', value: ''});
+	let allocate_secondary_consultant = ref({label: '', value: ''});
 	let allocate_bed_type = ref("");
-	let allocate_bed = ref("");
-	let allocate_encounter = ref("");
+	let allocate_bed = ref({label: '', value: ''});
+	let allocate_encounter = ref({label: '', value: ''});
 	let allocate_expected_length_of_stay = ref(0);
-	let transfer_patient = ref("");
+	let transfer_patient = ref({label: '', value: ''});
 	let transfer_patient_id = ref("");
 	let transfer_leave_from = ref("");
 	let transfer_bed_type = ref({label: '', value: ''});
@@ -639,6 +639,7 @@
 		},
 		onSuccess(response) {
 			if (response) {
+				console.log(response.allocate_patient_options)
 				type_options.value = response.type_options;
 				service_unit_options.value = response.service_unit_options;
 				patient_options.value = response.patient_options;
@@ -783,11 +784,11 @@
 
 	function schedule_admission_dialog(room) {
 		get_encounters();
-		allocate_encounter.value = null;
-		allocate_patient.value = null;
+		allocate_encounter.value = {label: '', value: ''};;
+		allocate_patient.value = {label: '', value: ''};;
 		allocate_patient_id.value = null;
-		allocate_primary_consultant.value = null;
-		allocate_secondary_consultant.value = null;
+		allocate_primary_consultant.value = {label: '', value: ''};;
+		allocate_secondary_consultant.value = {label: '', value: ''};;
 		allocate_expected_length_of_stay.value = 0;
 		allocate_bed_type.value = room.service_unit_type;
 		allocate_bed.value = { "label": room.healthcare_service_unit_name, "value": room.name };
