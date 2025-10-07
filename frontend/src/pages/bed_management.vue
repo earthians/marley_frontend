@@ -177,7 +177,6 @@
 										<FeatherIcon :name="'user-plus'" class="size-8 sm:size-10 text-ink-gray-7" />
 									</slot>
 								</Tooltip>
-								<FeatherIcon name="user-plus" class="size-8 sm:size-10 text-ink-gray-7" />
 							</Button>
 
 							<Button
