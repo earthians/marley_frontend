@@ -47,165 +47,226 @@
 
 		<div class="h-[calc(95vh-64px)] flex">
 			<!-- Left Panel: Bed Layout -->
-			<div class="w-3/4 p-6 overflow-y-auto">
+			<div class="w-full md:w-3/4 p-4 md:p-6 overflow-y-auto">
 				<div v-for="(ward, index) in item_list" :key="index" class="mb-6">
-					<h2 class="text-gray-500 font-bold text-lg mb-3">{{ ward.room_type_details }}</h2>
-					<div class="grid grid-cols-6 gap-3">
-						<button v-for="bed in ward.rooms" :key="bed.name"
-							class="p-3 rounded-md text-center text-sm font-semibold transition-all" :class="{
-								'bg-red-200': bed.room_status === 'Occupied',
-								'bg-green-200': bed.room_status === 'Vacant',
-								'!bg-gray-700 text-white': bed.name === selectedBed.name,
-								'bg-blue-500 text-white': bed.room_status === 'Cleaning',
-								'bg-violet-700 text-white': bed.room_status === 'Under Maintenance',
-							}" @click="open_room_details(bed)">
-							{{ bed.healthcare_service_unit_name }}
-						</button>
+					<h2 class="text-gray-500 font-bold text-base md:text-lg mb-3">{{ ward.room_type_details }}</h2>
+
+					<!-- Responsive grid -->
+					<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-3">
+						<div
+							v-for="bed in ward.rooms"
+							:key="bed.name"
+							class="cursor-pointer flex flex-col items-center justify-center rounded-lg p-3 sm:p-4 shadow-sm transition-all border text-center"
+							:class="{
+								'bg-red-200 border-red-400 text-red-900': bed.room_status === 'Occupied' && bed.name != selectedBed?.name,
+								'bg-green-200 border-green-400 text-green-900': bed.room_status === 'Vacant' && bed.name != selectedBed?.name,
+								'bg-blue-200 border-blue-400 text-blue-900': bed.room_status === 'Cleaning' && bed.name != selectedBed?.name,
+								'bg-violet-200 border-violet-400 text-violet-900': bed.room_status === 'Under Maintenance' && bed.name != selectedBed?.name,
+								'!bg-gray-300 !text-gray-900 border-gray-400 !shadow-md': bed.name === selectedBed?.name,
+							}"
+							@click="open_room_details(bed)"
+						>
+							<!-- Bed Icon -->
+							<Bed class="w-6 h-6 sm:w-8 sm:h-8 mb-2" />
+
+							<!-- Bed Name -->
+							<span
+								class="text-xs sm:text-sm font-medium truncate w-full max-w-[80px] sm:max-w-[100px] block overflow-hidden text-ellipsis whitespace-nowrap"
+								:title="bed.healthcare_service_unit_name"
+							>
+								{{ bed.healthcare_service_unit_name }}
+							</span>
+						</div>
 					</div>
 				</div>
 			</div>
 
 			<!-- Right Panel: Bed Details & Allocation -->
-			<div class="w-1/4 h-[calc(96vh-64px)] p-6 shadow-lg border rounded-lg">
+			<div class="w-full md:w-1/3 lg:w-1/4 h-auto md:h-[calc(96vh-64px)] p-4 sm:p-6 shadow-lg border rounded-lg mt-4 md:mt-0">
 				<div v-if="selectedBed.name">
-					<div class="flex justify-left mt-5 py-1 gap-2">
-						<span class="px-3 py-1 text-xs font-bold rounded-md" :class="{
-							'bg-green-200 text-green-700': selectedBed.room_status === 'Vacant',
-							'bg-red-200 text-red-700': selectedBed.room_status === 'Occupied',
-							'bg-blue-200 text-gray-700': selectedBed.room_status === 'Cleaning',
-							'bg-violet-700 text-white': selectedBed.room_status === 'Under Maintenance',
-						}">
+					<!-- Status Badges -->
+					<div class="flex flex-wrap items-center mt-4 gap-2">
+						<span
+							class="px-3 py-1 text-xs font-bold rounded-md"
+							:class="{
+								'bg-green-200 text-green-700': selectedBed.room_status === 'Vacant',
+								'bg-red-200 text-red-700': selectedBed.room_status === 'Occupied',
+								'bg-blue-200 text-gray-700': selectedBed.room_status === 'Cleaning',
+								'bg-violet-700 text-white': selectedBed.room_status === 'Under Maintenance',
+							}"
+						>
 							{{ selectedBed.room_status.toUpperCase() }}
 						</span>
-						<span v-if="['Admission Scheduled', 'Admitted'].includes(selectedBed.ip_status) && selectedBed.room_status === 'Cleaning'" class="px-3 py-1 text-xs font-bold rounded-md bg-red-200 text-red-700">
+
+						<span
+							v-if="['Admission Scheduled', 'Admitted'].includes(selectedBed.ip_status) && selectedBed.room_status === 'Cleaning'"
+							class="px-3 py-1 text-xs font-bold rounded-md bg-red-200 text-red-700"
+						>
 							{{ selectedBed.ip_status.toUpperCase() }}
 						</span>
 					</div>
-					<h3 class="mt-3 font-semibold text-lg">{{ selectedBed.healthcare_service_unit_name }}</h3>
-					<p class="text-gray-600 mt-1">₹{{ selectedBed.rate }} / {{ selectedBed.uom }}</p>
-					<div v-if="selectedBed.room_status == 'Occupied' || ['Admission Scheduled', 'Admitted'].includes(selectedBed.ip_status)">
-						<h3 class="mt-3 font-semibold text-lg py-2">
-							Occupancy Details
-						</h3>
-						<p class="text-gray-600 mt-1">
-							<b>Patient:</b> {{ selectedBed.patient_name }}
-						</p>
-						<p class="text-gray-600 mt-1">
-							<b>Encounter:</b> {{ selectedBed.admission_encounter }}
-						</p>
-						<p class="text-gray-600 mt-1">
-							<b>Practitioner:</b> {{ selectedBed.practitioner_name }}
-						</p>
-						<p class="text-gray-600 mt-1">
-							<b>IPD:</b> <button @click="navigate_to_ip(selectedBed.ip_record)">
-								{{ selectedBed.ip_record }}
-							</button>
-						</p>
-						<p class="text-gray-600 mt-1">
-							<b>IP Status:</b> {{ selectedBed.ip_status }}
-						</p>
-						<p class="text-gray-600 mt-1">
-							<b>Checked In Time:</b> {{ formatDatetime(selectedBed.check_in) }}
-						</p>
-						<p class="text-gray-600 mt-1">
-							<b>Admission Ordered For:</b> {{ formatDate(selectedBed.admission_ordered_for) }}
-						</p>
-						<p class="text-gray-600 mt-1">
-							<b>Expected Discharge:</b> {{ formatDate(selectedBed.expected_discharge) }}
-						</p>
-						<p class="text-gray-600 mt-1">
-							<b>Admitted On:</b> {{ formatDatetime(selectedBed.admitted_datetime) }}
-						</p>
-						<p class="text-gray-600 mt-1">
-							<b>Discharged On:</b> {{ formatDatetime(selectedBed.discharge_datetime) }}
-						</p>
+
+					<!-- Bed Details -->
+					<h3 class="mt-3 font-semibold text-lg sm:text-xl break-words">
+						{{ selectedBed.healthcare_service_unit_name }}
+					</h3>
+					<p class="text-gray-600 mt-1 text-sm sm:text-base">
+						₹{{ selectedBed.rate }} / {{ selectedBed.uom }}
+					</p>
+
+					<!-- Occupancy Details -->
+					<div
+						v-if="selectedBed.room_status == 'Occupied' || ['Admission Scheduled', 'Admitted'].includes(selectedBed.ip_status)"
+						class="mt-6"
+					>
+						<h3 class="font-semibold text-base sm:text-xl py-2 border-b border-gray-200">Occupancy Details</h3>
+
+						<div class="space-y-1 text-gray-600 text-sm sm:text-base mt-2">
+							<p><b>Patient: </b> {{ selectedBed.patient_name }}</p>
+							<p class="mt-1"><b>Encounter: </b> {{ selectedBed.admission_encounter }}</p>
+							<p class="mt-1"><b>Practitioner: </b> {{ selectedBed.practitioner_name }}</p>
+							<p class="mt-1">
+								<b>IPD: </b>
+								<button class="text-blue-600 underline" @click="navigate_to_ip(selectedBed.ip_record)">
+									{{ selectedBed.ip_record }}
+								</button>
+							</p>
+							<p class="mt-1"><b>IP Status: </b> {{ selectedBed.ip_status }}</p>
+							<p class="mt-1"><b>Checked In Time: </b> {{ formatDatetime(selectedBed.check_in) }}</p>
+							<p class="mt-1"><b>Admission Ordered For: </b> {{ formatDate(selectedBed.admission_ordered_for) }}</p>
+							<p class="mt-1"><b>Expected Discharge: </b> {{ formatDate(selectedBed.expected_discharge) }}</p>
+							<p class="mt-1"><b>Admitted On: </b> {{ formatDatetime(selectedBed.admitted_datetime) }}</p>
+							<p class="mt-1"><b>Discharged On: </b> {{ formatDatetime(selectedBed.discharge_datetime) }}</p>
+						</div>
 					</div>
-					<div class="mt-5 py-8 px-3">
-						<h3 class="flex justify-center mt-3 font-semibold text-lg">Actions</h3>
-						<div class="flex justify-center mt-5 px-3 gap-2">
-							<Button v-if="selectedBed.room_status == 'Vacant'" :variant="'outline'" :ref_for="true"
-								theme="gray" size="xl" label="Schedule Admission" :disabled="selectedBed.disable_schedule" @click="schedule_admission_dialog(selectedBed)"
-								class="px-4 py-8 rounded-md">
-								<div class="flex items-center truncate">
-									<Tooltip :text="'Schedule Admission'" placement="top">
-										<slot name="icon">
-											<FeatherIcon :name="'plus'" class="size-10 text-ink-gray-7" />
-										</slot>
-									</Tooltip>
-								</div>
+
+					<!-- Actions Section -->
+					<div class="mt-6 py-6 px-3 border-t border-gray-200">
+						<h3 class="flex justify-center text-base sm:text-lg font-semibold">Actions</h3>
+
+						<div class="flex flex-wrap justify-center gap-3 mt-4">
+							<!-- Each button shrinks and wraps properly on small screens -->
+							<Button
+								v-if="selectedBed.room_status == 'Vacant'"
+								variant="outline"
+								theme="gray"
+								size="xl"
+								label="Schedule Admission"
+								:disabled="selectedBed.disable_schedule"
+								@click="schedule_admission_dialog(selectedBed)"
+								class="px-3 py-4 sm:px-4 sm:py-6 rounded-md flex-shrink"
+							>
+								<Tooltip :text="'Schedule Admission'" placement="top">
+									<slot name="icon">
+										<FeatherIcon :name="'plus'" class="size-8 sm:size-10 text-ink-gray-7" />
+									</slot>
+								</Tooltip>
 							</Button>
-							<Button v-if="selectedBed.ip_status == 'Admission Scheduled'" :variant="'outline'" :ref_for="true"
-								theme="gray" size="xl" label="Admit" :disabled="selectedBed.disable_schedule" @click="admit_confirm = true"
-								class="px-4 py-8 rounded-md">
-								<div class="flex items-center truncate">
-									<Tooltip :text="'Admit'" placement="top">
-										<slot name="icon">
-											<FeatherIcon :name="'user-plus'" class="size-10 text-ink-gray-7" />
-										</slot>
-									</Tooltip>
-								</div>
+
+							<Button
+								v-if="selectedBed.ip_status == 'Admission Scheduled'"
+								variant="outline"
+								theme="gray"
+								size="xl"
+								label="Admit"
+								@click="admit_confirm = true"
+								class="px-3 py-4 sm:px-4 sm:py-6 rounded-md flex-shrink"
+							>
+								<Tooltip :text="'Admit'" placement="top">
+									<slot name="icon">
+										<FeatherIcon :name="'user-plus'" class="size-8 sm:size-10 text-ink-gray-7" />
+									</slot>
+								</Tooltip>
+								<FeatherIcon name="user-plus" class="size-8 sm:size-10 text-ink-gray-7" />
 							</Button>
-							<Button v-if="selectedBed.room_status == 'Under Maintenance'" :variant="'outline'" :ref_for="true"
-								theme="gray" size="xl" label="Set as Vacant" :disabled="false" @click="set_status(selectedBed, 'Vacant')"
-								class="px-4 py-8 rounded-md">
-								<div class="flex items-center truncate">
-									<Tooltip :text="'Set as Vacant'" placement="top">
-										<slot name="icon">
-											<FeatherIcon :name="'check'" class="size-10 text-ink-gray-7" />
-										</slot>
-									</Tooltip>
-								</div>
+
+							<Button
+								v-if="selectedBed.room_status == 'Under Maintenance'"
+								variant="outline"
+								theme="gray"
+								size="xl"
+								label="Set as Vacant"
+								@click="set_status(selectedBed, 'Vacant')"
+								class="px-3 py-4 sm:px-4 sm:py-6 rounded-md flex-shrink"
+							>
+								<Tooltip :text="'Set as Vacant'" placement="top">
+									<slot name="icon">
+										<FeatherIcon :name="'check'" class="size-8 sm:size-10 text-ink-gray-7" />
+									</slot>
+								</Tooltip>
 							</Button>
-							<Button v-if="selectedBed.room_status == 'Occupied' && selectedBed.ip_status == 'Admitted'" :variant="'outline'" :ref_for="true"
-								theme="gray" size="xl" label="Transfer" :disabled="false" @click="transfer_dialog(selectedBed)"
-								class="px-4 py-8 rounded-md">
-								<div class="flex items-center truncate">
-									<Tooltip :text="'Transfer'" placement="top">
-										<slot name="icon">
-											<FeatherIcon :name="'repeat'" class="size-10 text-ink-gray-7" />
-										</slot>
-									</Tooltip>
-								</div>
+
+							<Button
+								v-if="selectedBed.room_status == 'Occupied' && selectedBed.ip_status == 'Admitted'"
+								variant="outline"
+								theme="gray"
+								size="xl"
+								label="Transfer"
+								@click="transfer_dialog(selectedBed)"
+								class="px-3 py-4 sm:px-4 sm:py-6 rounded-md flex-shrink"
+							>
+								<Tooltip :text="'Transfer'" placement="top">
+									<slot name="icon">
+										<FeatherIcon :name="'repeat'" class="size-8 sm:size-10 text-ink-gray-7" />
+									</slot>
+								</Tooltip>
 							</Button>
-							<Button v-if="selectedBed.room_status == 'Vacant'" :variant="'outline'" :ref_for="true"
-								theme="gray" size="xl" label="Under Maintenance" :disabled="false" @click="set_status(selectedBed, 'Under Maintenance')"
-								class="px-4 py-8 rounded-md">
-								<div class="flex items-center truncate">
-									<Tooltip :text="'Set as Under Maintenance'" placement="top">
-										<slot name="icon">
-											<FeatherIcon :name="'alert-triangle'" class="size-10 text-ink-gray-7" />
-										</slot>
-									</Tooltip>
-								</div>
+
+							<Button
+								v-if="selectedBed.room_status == 'Vacant'"
+								variant="outline"
+								theme="gray"
+								size="xl"
+								label="Under Maintenance"
+								@click="set_status(selectedBed, 'Under Maintenance')"
+								class="px-3 py-4 sm:px-4 sm:py-6 rounded-md flex-shrink"
+							>
+								<Tooltip :text="'Under Maintenance'" placement="top">
+									<slot name="icon">
+										<FeatherIcon :name="'alert-triangle'" class="size-8 sm:size-10 text-ink-gray-7" />
+									</slot>
+								</Tooltip>
 							</Button>
-							<Button v-if="['Under Maintenance', 'Occupied', 'Vacant'].includes(selectedBed.room_status)" :variant="'outline'" :ref_for="true"
-								theme="gray" size="xl" label="Cleaning" :disabled="false" @click="set_status(selectedBed, 'Cleaning')"
-								class="px-4 py-8 rounded-md">
-								<div class="flex items-center truncate">
-									<Tooltip :text="'Set as Cleaning'" placement="top">
-										<slot name="icon">
-											<FeatherIcon :name="'zap'" class="size-10 text-ink-gray-7" />
-										</slot>
-									</Tooltip>
-								</div>
+
+							<Button
+								v-if="['Under Maintenance', 'Occupied', 'Vacant'].includes(selectedBed.room_status)"
+								variant="outline"
+								theme="gray"
+								size="xl"
+								label="Cleaning"
+								@click="set_status(selectedBed, 'Cleaning')"
+								class="px-3 py-4 sm:px-4 sm:py-6 rounded-md flex-shrink"
+							>
+								<Tooltip :text="'Cleaning'" placement="top">
+									<slot name="icon">
+										<FeatherIcon :name="'zap'" class="size-8 sm:size-10 text-ink-gray-7" />
+									</slot>
+								</Tooltip>
 							</Button>
-							<Button v-if="selectedBed.room_status == 'Cleaning'" :variant="'outline'" :ref_for="true"
-								theme="gray" size="xl" label="Cleaning Completed" :disabled="false" @click="set_status(selectedBed, 'Cleaning Completed')"
-								class="px-4 py-8 rounded-md">
-								<div class="flex items-center truncate">
-									<Tooltip :text="'Cleaning Completed'" placement="top">
-										<slot name="icon">
-											<FeatherIcon :name="'check'" class="size-10 text-ink-gray-7" />
-										</slot>
-									</Tooltip>
-								</div>
+
+							<Button
+								v-if="selectedBed.room_status == 'Cleaning'"
+								variant="outline"
+								theme="gray"
+								size="xl"
+								label="Cleaning Completed"
+								@click="set_status(selectedBed, 'Cleaning Completed')"
+								class="px-3 py-4 sm:px-4 sm:py-6 rounded-md flex-shrink"
+							>
+								<Tooltip :text="'Cleaning Completed'" placement="top">
+									<slot name="icon">
+										<FeatherIcon :name="'check'" class="size-8 sm:size-10 text-ink-gray-7" />
+									</slot>
+								</Tooltip>
 							</Button>
 						</div>
 					</div>
 				</div>
 
-				<div v-else class="text-gray-500 text-center mt-10">Select a bed</div>
+				<!-- Fallback -->
+				<div v-else class="text-gray-500 text-center mt-10 text-sm sm:text-base">Select a bed</div>
 			</div>
+
 		</div>
 
 		<!-- alert dialog -->
@@ -491,6 +552,7 @@
 		Switch,
 	} from "frappe-ui";
 	import { getFormat } from '@/utils'
+	import { Bed } from 'lucide-vue-next'
 
 	// master options
 	let service_unit_options = ref([]);
@@ -528,8 +590,8 @@
 	let transfer_patient = ref("");
 	let transfer_patient_id = ref("");
 	let transfer_leave_from = ref("");
-	let transfer_bed_type = ref({});
-	let transfer_bed = ref({});
+	let transfer_bed_type = ref({label: '', value: ''});
+	let transfer_bed = ref({label: '', value: ''});
 	let transfer_ipd = ref("");
 	let for_procedure = ref(false);
 	let admit_patient_name = ref("");
@@ -704,12 +766,12 @@
 	}
 
 	function clear_filters() {
-		bed_filter.value = null;
-		room_type_filter.value = null;
+		bed_filter.value = {label: '', value: ''};
+		room_type_filter.value = {label: '', value: ''};
 		status_filter.value = null;
-		patient_filter.value = null;
-		date_filter.value = null;
-		selectedBed.value = {};
+		patient_filter.value = {label: '', value: ''};
+		date_filter.value = new Date().toISOString().split('T')[0];
+		selectedBed.value = {label: '', value: ''};
 	};
 
 	function open_room_details(room) {
@@ -929,12 +991,8 @@
 		transfer_patient_id.value = bed.patient;
 		transfer_leave_from.value = bed.name;
 		transfer_ipd.value = bed.ip_record;
-		transfer_bed_type.value = null;
-		transfer_bed.value = null;
-	}
-
-	function confirm_to_desk() {
-		confirm_to_desk_dialog.value = true;
+		transfer_bed_type.value = {label: '', value: ''};
+		transfer_bed.value = {label: '', value: ''};
 	}
 
 	function go_to_desk_page(){
