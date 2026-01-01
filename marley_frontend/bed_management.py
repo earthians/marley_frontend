@@ -1,19 +1,17 @@
 import frappe
-
-from frappe.utils import add_to_date, get_date_str, getdate, now
 from frappe.defaults import get_user_default_as_list
+from frappe.utils import add_to_date, get_date_str, getdate, now
+
 from erpnext import get_default_company
 
 from healthcare.healthcare.doctype.inpatient_record.inpatient_record import create_inpatient_record
 
-
 undefined_conditions = ["null", "", "undefined", "false", False, "[]", []]
+
 
 @frappe.whitelist()
 def get_filter_options(room_type_filter):
-	room_type_filter = (
-		None if room_type_filter in undefined_conditions else room_type_filter
-	)
+	room_type_filter = None if room_type_filter in undefined_conditions else room_type_filter
 
 	service_unit_options = []
 	type_options = []
@@ -76,16 +74,10 @@ def get_filter_options(room_type_filter):
 		order_by="name ASC",
 	)
 
-	room_status_options = [{
-		"label": "",
-		"value": ""
-	}]
+	room_status_options = [{"label": "", "value": ""}]
 	field_meta = frappe.get_meta("Healthcare Service Unit").get_field("room_status")
 	for item in field_meta.options.strip().splitlines():
-		room_status_options.append({
-			"label": item.strip(),
-			"value": item.strip()
-		})
+		room_status_options.append({"label": item.strip(), "value": item.strip()})
 
 	return {
 		"service_unit_options": service_unit_options,
@@ -96,6 +88,7 @@ def get_filter_options(room_type_filter):
 		"allocate_rooms_options": allocate_rooms_options,
 		"room_status_options": room_status_options,
 	}
+
 
 @frappe.whitelist()
 def get_filter_room(room_type, company=None):
@@ -119,7 +112,7 @@ def get_filter_room(room_type, company=None):
 			"inpatient_occupancy": 1,
 			"service_unit_type": room_type,
 			"room_status": "Vacant",
-			"company": company
+			"company": company,
 		},
 		fields=["healthcare_service_unit_name as label", "name as value"],
 		order_by="name ASC",
@@ -151,15 +144,15 @@ def get_room_details(**args):
 	if isinstance(args, dict):
 		args = frappe._dict(args)
 
-	args.date_filter =  getdate() if args.date_filter in undefined_conditions else getdate(args.date_filter)
-	args.status_filter =  None if args.status_filter in undefined_conditions else args.status_filter
+	args.date_filter = getdate() if args.date_filter in undefined_conditions else getdate(args.date_filter)
+	args.status_filter = None if args.status_filter in undefined_conditions else args.status_filter
 	args.patient_filter = None if args.patient_filter in undefined_conditions else args.patient_filter
 	cond = ""
 
-	if args.room_type_filter and not args.room_type_filter in undefined_conditions:
+	if args.room_type_filter and args.room_type_filter not in undefined_conditions:
 		cond += f" and su.service_unit_type={frappe.db.escape(args.room_type_filter)}"
 
-	if args.bed_filter and not args.bed_filter in undefined_conditions:
+	if args.bed_filter and args.bed_filter not in undefined_conditions:
 		cond += f" and su.name={frappe.db.escape(args.bed_filter)}"
 
 	user = frappe.session.user
@@ -173,7 +166,8 @@ def get_room_details(**args):
 	if company:
 		cond += f" and su.company={frappe.db.escape(company)}"
 
-	service_units = frappe.db.sql(f"""
+	service_units = frappe.db.sql(
+		f"""
 		SELECT
 			su.*, sut.item, sut.rate, sut.uom, sut.no_of_hours, sut.minimum_billable_qty, sut.is_billable
 		FROM
@@ -185,10 +179,13 @@ def get_room_details(**args):
 			{cond}
 		GROUP BY su.name
 		ORDER BY su.service_unit_type ASC, su.name ASC
-	""", as_dict=True)
+	""",
+		as_dict=True,
+	)
 
 	for su in service_units:
-		io_exists = frappe.db.sql(f"""
+		io_exists = frappe.db.sql(
+			f"""
 			SELECT
 				ip.patient, ip.patient_name, ip.admission_encounter, ip.admission_ordered_for,
 				ip.primary_practitioner, ip.scheduled_date, ip.admitted_datetime, io.check_in,
@@ -203,9 +200,12 @@ def get_room_details(**args):
 				DATE(io.check_in) <= DATE({frappe.db.escape(get_date_str(args.date_filter))}) and
 				ifnull(DATE(io.check_out), {frappe.db.escape(get_date_str(args.date_filter))}) >= DATE({frappe.db.escape(get_date_str(args.date_filter))}) and
 				ip.company = {frappe.db.escape(company)}
-		""", as_dict=True)
+		""",
+			as_dict=True,
+		)
 
-		ip_exists = frappe.db.sql(f"""
+		ip_exists = frappe.db.sql(
+			f"""
 			SELECT
 				ip.patient, ip.patient_name, ip.admission_encounter, ip.admission_ordered_for,
 				ip.primary_practitioner, ip.scheduled_date, ip.admitted_datetime,
@@ -218,7 +218,9 @@ def get_room_details(**args):
 				ip.company = {frappe.db.escape(company)} and
 				DATE(ip.admission_ordered_for) <= DATE({frappe.db.escape(get_date_str(args.date_filter))}) and
 				ifnull(DATE(ip.expected_discharge), {frappe.db.escape(get_date_str(args.date_filter))}) >= DATE({frappe.db.escape(get_date_str(args.date_filter))})
-		""", as_dict=True)
+		""",
+			as_dict=True,
+		)
 
 		if su.room_status in ["Under Maintenance", "Cleaning"]:
 			pass
@@ -259,31 +261,17 @@ def order_admission(
 ):
 	patient = None if patient in undefined_conditions else patient
 	encounter = None if encounter in undefined_conditions else encounter
-	primary_consultant = (
-		None if primary_consultant in undefined_conditions else primary_consultant
-	)
-	secondary_consultant = (
-		None
-		if secondary_consultant in undefined_conditions
-		else secondary_consultant
-	)
+	primary_consultant = None if primary_consultant in undefined_conditions else primary_consultant
+	secondary_consultant = None if secondary_consultant in undefined_conditions else secondary_consultant
 	bed_type = None if bed_type in undefined_conditions else bed_type
 	bed = None if bed in undefined_conditions else bed
 	expected_length_of_stay = (
-		0
-		if expected_length_of_stay in undefined_conditions
-		else expected_length_of_stay
+		0 if expected_length_of_stay in undefined_conditions else expected_length_of_stay
 	)
 
-	admission_date = (
-		getdate(admission_date)
-		if admission_date in undefined_conditions
-		else admission_date
-	)
+	admission_date = getdate(admission_date) if admission_date in undefined_conditions else admission_date
 
-	medical_department = frappe.db.get_value(
-		"Healthcare Practitioner", primary_consultant, "department"
-	)
+	medical_department = frappe.db.get_value("Healthcare Practitioner", primary_consultant, "department")
 	company = get_default_company()
 	if encounter:
 		encounter_doc = frappe.get_doc("Patient Encounter", encounter)
@@ -293,9 +281,7 @@ def order_admission(
 	admission_order = {
 		"patient": patient,
 		"admission_encounter": encounter,
-		"referring_practitioner": frappe.db.get_value(
-			"Patient Encounter", encounter, "practitioner"
-		),
+		"referring_practitioner": frappe.db.get_value("Patient Encounter", encounter, "practitioner"),
 		"company": company,
 		"medical_department": medical_department,
 		"primary_practitioner": primary_consultant,
@@ -305,7 +291,9 @@ def order_admission(
 		"admission_service_unit": bed,
 		"treatment_plan_template": None,
 		"expected_length_of_stay": int(expected_length_of_stay),
-		"expected_discharge": add_to_date(admission_date, days=int(expected_length_of_stay)) if int(expected_length_of_stay) > 0 else None,
+		"expected_discharge": add_to_date(admission_date, days=int(expected_length_of_stay))
+		if int(expected_length_of_stay) > 0
+		else None,
 		"admission_instruction": None,
 		"admission_nursing_checklist_template": None,
 	}
@@ -369,6 +357,8 @@ def admit_patient(ip_record, service_unit, check_in, expected_discharge):
 		frappe.throw("Need a valid Inpatient Record to admit this patient")
 
 	ip_doc = frappe.get_doc("Inpatient Record", ip_record)
-	price_list, currency = frappe.get_cached_value("Patient", ip_doc.patient, ["default_price_list", "default_currency"])
+	price_list, currency = frappe.get_cached_value(
+		"Patient", ip_doc.patient, ["default_price_list", "default_currency"]
+	)
 	ip_doc.admit(service_unit, check_in, expected_discharge, currency, price_list)
 	frappe.db.commit()

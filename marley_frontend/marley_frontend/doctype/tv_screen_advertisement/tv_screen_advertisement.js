@@ -8,5 +8,5 @@
 // 		        frappe.throw("Default Ad file already existsss")
 // 		    }
 // 	    }
-// 	}		
+// 	}
 // })

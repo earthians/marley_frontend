@@ -1,5 +1,5 @@
-from datetime import datetime
 import json
+from datetime import datetime
 
 import frappe
 from frappe.utils import (
@@ -7,9 +7,9 @@ from frappe.utils import (
 	fmt_money,
 	format_date,
 	format_time,
-	getdate,
 	get_datetime,
 	get_time,
+	getdate,
 	now_datetime,
 	time_diff_in_hours,
 )
@@ -19,12 +19,14 @@ from erpnext.accounts.party import get_party_account
 from erpnext.setup.utils import get_exchange_rate
 from erpnext.stock.get_item_details import get_item_price
 
+from healthcare.healthcare.doctype.fee_validity.fee_validity import check_fee_validity, get_fee_validity
 from healthcare.healthcare.doctype.healthcare_settings.healthcare_settings import (
 	get_income_account,
 	get_receivable_account,
 )
 from healthcare.healthcare.doctype.patient_appointment.patient_appointment import update_status
 from healthcare.healthcare.utils import (
+	get_appointment_billing_item_and_rate,
 	get_appointments_to_invoice,
 	get_clinical_procedures_to_invoice,
 	get_drugs_to_invoice,
@@ -32,12 +34,10 @@ from healthcare.healthcare.utils import (
 	get_healthcare_services_to_invoice,
 	get_inpatient_services_to_invoice,
 	get_observations_to_invoice,
-	get_appointment_billing_item_and_rate,
 	get_practitioner_billing_details,
 )
 
 from marley_frontend.api import check_and_insert_token
-from healthcare.healthcare.doctype.fee_validity.fee_validity import check_fee_validity, get_fee_validity
 
 undefined_conditions = ["null", "", "undefined", "false", False, "[]", []]
 
@@ -50,7 +50,7 @@ def get_masters():
 	practitioners = frappe.db.get_all(
 		"Healthcare Practitioner",
 		fields=["practitioner_name as label", "name as value", "image"],
-		order_by="name ASC"
+		order_by="name ASC",
 	)
 	default_image = "/src/assets/UserIcon.svg"
 	for i in practitioners:
@@ -59,26 +59,19 @@ def get_masters():
 	departments = frappe.db.get_all("Medical Department", fields=["name as label", "name as value"])
 
 	employee_options = frappe.db.get_all(
-		"Employee",
-		filters={"status": "Active"},
-		fields=["employee_name as label", "name as value"])
+		"Employee", filters={"status": "Active"}, fields=["employee_name as label", "name as value"]
+	)
 
-	source_options = [{
-		"label": "",
-		"value": ""
-	}]
+	source_options = [{"label": "", "value": ""}]
 	field_meta = frappe.get_meta("Patient").get_field("custom_source")
 	for item in field_meta.options.strip().splitlines():
-		source_options.append({
-			"label": item.strip(),
-			"value": item.strip()
-		})
+		source_options.append({"label": item.strip(), "value": item.strip()})
 
 	return {
 		"practitioners": practitioners,
 		"departments": departments,
 		"employee_options": employee_options,
-		"source_options": source_options
+		"source_options": source_options,
 	}
 
 
@@ -120,13 +113,11 @@ def get_patients():
 @frappe.whitelist(allow_guest=True)
 def get_appointment_types(practitioner=None, new_patient=False):
 	practitioner = None if practitioner in ["undefined", "", "null"] else practitioner
-	new_patient = (
-		False if new_patient in ["undefined", "", "null", "false"] else new_patient
-	)
+	new_patient = False if new_patient in ["undefined", "", "null", "false"] else new_patient
 	filters = {}
 
 	if new_patient:
-		filters={"custom_is_physio": 0}
+		filters = {"custom_is_physio": 0}
 	elif practitioner:
 		is_physio, show_all_appointment_types = frappe.db.get_value(
 			"Healthcare Practitioner",
@@ -134,9 +125,9 @@ def get_appointment_types(practitioner=None, new_patient=False):
 			["custom_is_physiotherapist", "custom_show_all_appointment_types"],
 		)
 		if not show_all_appointment_types and is_physio:
-			filters={"custom_is_physio": 1}
+			filters = {"custom_is_physio": 1}
 		elif not show_all_appointment_types and not is_physio:
-			filters={"custom_is_physio": 0}
+			filters = {"custom_is_physio": 0}
 
 	appointment_types = frappe.db.get_all(
 		"Appointment Type",
@@ -157,11 +148,7 @@ def check_is_physio(app_type=None):
 	if not app_type:
 		return
 
-	return (
-		True
-		if frappe.db.get_value("Appointment Type", app_type, "custom_is_physio")
-		else None
-	)
+	return True if frappe.db.get_value("Appointment Type", app_type, "custom_is_physio") else None
 
 
 # Api for slots getting
@@ -183,17 +170,13 @@ def get_slots_in_dialog(practitioner, date):
 		filters={"practitioner": practitioner_doc.name, "appointment_date": date},
 		pluck="appointment_time",
 	)
-	booked_slots = [
-		(datetime.min + booked_slot).time() for booked_slot in curr_bookings
-	]
+	booked_slots = [(datetime.min + booked_slot).time() for booked_slot in curr_bookings]
 
 	available_slots = full_slots = []
 	weekday = date.strftime("%A")
 
 	for schedule_entry in practitioner_doc.practitioner_schedules:
-		practitioner_schedule = frappe.get_doc(
-			"Practitioner Schedule", schedule_entry.schedule
-		)
+		practitioner_schedule = frappe.get_doc("Practitioner Schedule", schedule_entry.schedule)
 
 		if practitioner_schedule and not practitioner_schedule.disabled:
 			available_slots = []
@@ -236,15 +219,11 @@ def get_appointments(
 		for i in practitioner:
 			pract_list.append(i.get("value"))
 
-	appointment_type = (
-		None if appointment_type in undefined_conditions else appointment_type
-	)
+	appointment_type = None if appointment_type in undefined_conditions else appointment_type
 	appointment = None if search_by in undefined_conditions else search_by
 	department = None if department in undefined_conditions else department
 	patient = None if patient in undefined_conditions else patient
-	appointment_date = (
-		getdate() if appointment_date in undefined_conditions else getdate(appointment_date)
-	)
+	appointment_date = getdate() if appointment_date in undefined_conditions else getdate(appointment_date)
 	mobile = None if mobile in undefined_conditions else mobile
 	sort_by = "Appointment Time" if sort_by in undefined_conditions else sort_by
 
@@ -305,21 +284,17 @@ def update_appointment(appointment_data, sort_by="Appointment Time"):
 				item["patient_token_number"] = patient_token_number
 				item["token_status"] = status
 
-		item["is_today"] = (
-			True if getdate() == getdate(item.appointment_date) else False
-		)
+		item["is_today"] = True if getdate() == getdate(item.appointment_date) else False
 		item["mobile"] = str(
 			patient_doc.get("mobile")
 			if patient_doc.get("mobile")
-			else patient_doc.get("phone") if patient_doc.get("phone") else "-"
+			else patient_doc.get("phone")
+			if patient_doc.get("phone")
+			else "-"
 		)
-		item["age"] = str(
-			patient_doc.get("custom_age") if patient_doc.get("custom_age") else ""
-		)
+		item["age"] = str(patient_doc.get("custom_age") if patient_doc.get("custom_age") else "")
 		item["visit_date"] = (
-			format_date(
-				getdate(patient_doc.get("custom_last_visit_date")), "dd-mm-yyyy"
-			)
+			format_date(getdate(patient_doc.get("custom_last_visit_date")), "dd-mm-yyyy")
 			if patient_doc.get("custom_last_visit_date")
 			else None
 		)
@@ -331,14 +306,10 @@ def update_appointment(appointment_data, sort_by="Appointment Time"):
 		item["encounter"] = has_encounter
 		item["has_token"] = False if item.patient_token else True
 		item["patient_id"] = patient_doc.get("name")
-		item["appointment_type"] = (
-			item.appointment_type if hasattr(item, "appointment_type") else None
-		)
+		item["appointment_type"] = item.appointment_type if hasattr(item, "appointment_type") else None
 
 		if item.status == "Closed":
-			encounter = frappe.db.exists(
-				"Patient Encounter", {"appointment": item.name, "docstatus": 1}
-			)
+			encounter = frappe.db.exists("Patient Encounter", {"appointment": item.name, "docstatus": 1})
 			item["consulted"] = True if encounter else False
 			item["status"] = "Consulted"
 		if item.patient_token:
@@ -347,23 +318,18 @@ def update_appointment(appointment_data, sort_by="Appointment Time"):
 		item["statusClass"] = get_status_class(item.status)
 		item["image"] = patient_doc.image or ""
 		item["practitioner_image"] = (
-			frappe.db.get_value("Healthcare Practitioner", item.practitioner, "image")
-			or ""
+			frappe.db.get_value("Healthcare Practitioner", item.practitioner, "image") or ""
 		)
 
 		# get unallocated advance amount
 		total_unallocated_advance_amt = get_total_unallocated_advance_amount(patient_doc.customer)
 		total_advance_amount = get_total_advance_amount(patient_doc.customer)
 		item["advance_amount"] = total_advance_amount
-		item["advance_amount_with_currency"] = fmt_money(
-			item["advance_amount"], None, currency
-		)
+		item["advance_amount_with_currency"] = fmt_money(item["advance_amount"], None, currency)
 
 		# get total_outstanding_amount
 		total_outstanding_amount, invoiced_due_data = get_total_outstanding_amount(item.patient)
-		item["invoiced_due_with_currency"] = fmt_money(
-			total_outstanding_amount, None, currency
-		)
+		item["invoiced_due_with_currency"] = fmt_money(total_outstanding_amount, None, currency)
 		item["invoiced_due"] = total_outstanding_amount
 		item["invoiced_due_data"] = invoiced_due_data
 
@@ -375,9 +341,9 @@ def update_appointment(appointment_data, sort_by="Appointment Time"):
 		item["balance"] = balance_amount
 
 	if sort_by == "Checkin Time":
-		appointment_data.sort(key=lambda x: (
-			x.get("checkin") if x.get("checkin") is not None else datetime.max,
-		))
+		appointment_data.sort(
+			key=lambda x: (x.get("checkin") if x.get("checkin") is not None else datetime.max,)
+		)
 
 
 def get_total_unallocated_advance_amount(customer=None):
@@ -392,14 +358,11 @@ def get_total_unallocated_advance_amount(customer=None):
 	)
 
 	total_unallocated_advance_amt = 0
-	if (
-		advance_balance
-		and len(advance_balance)
-		and advance_balance[0].get("unallocated_amount")
-	):
+	if advance_balance and len(advance_balance) and advance_balance[0].get("unallocated_amount"):
 		total_unallocated_advance_amt = advance_balance[0].get("unallocated_amount")
 
 	return total_unallocated_advance_amt
+
 
 @frappe.whitelist()
 def get_total_advance_amount(customer=None):
@@ -410,22 +373,21 @@ def get_total_advance_amount(customer=None):
 	)
 
 	total_unallocated_advance_amt = 0
-	if (
-		advance_balance
-		and len(advance_balance)
-		and advance_balance[0].get("unallocated_amount")
-	):
+	if advance_balance and len(advance_balance) and advance_balance[0].get("unallocated_amount"):
 		total_unallocated_advance_amt = advance_balance[0].get("unallocated_amount")
 
 	return total_unallocated_advance_amt
 
 
-def get_total_outstanding_amount(patient=None, date=getdate()):
+def get_total_outstanding_amount(patient=None, date=None):
+	if not date:
+		date = getdate()
+
 	invoices = frappe.db.get_all(
 		"Sales Invoice",
 		filters={"patient": patient, "docstatus": 1},
 		# fields=["sum(outstanding_amount) as outstanding_amount"],
-		fields=["name", "grand_total", "outstanding_amount", "posting_date"]
+		fields=["name", "grand_total", "outstanding_amount", "posting_date"],
 	)
 
 	due_data = []
@@ -434,14 +396,16 @@ def get_total_outstanding_amount(patient=None, date=getdate()):
 		for inv in invoices:
 			if inv.get("outstanding_amount"):
 				total_outstanding_amount += inv.get("outstanding_amount")
-				due_data.append({
-					"idx": str(len(due_data) + 1),
-					"service": inv.get("name"),
-					"payable_amount": str(inv.get("grand_total")),
-					"paid_amount": str(inv.get("grand_total") - inv.get("outstanding_amount")),
-					"balance_amount": str(inv.get("outstanding_amount")),
-					"posting_date": format_date(getdate(inv.get("posting_date")),"dd-mm-yyyy"),
-				})
+				due_data.append(
+					{
+						"idx": str(len(due_data) + 1),
+						"service": inv.get("name"),
+						"payable_amount": str(inv.get("grand_total")),
+						"paid_amount": str(inv.get("grand_total") - inv.get("outstanding_amount")),
+						"balance_amount": str(inv.get("outstanding_amount")),
+						"posting_date": format_date(getdate(inv.get("posting_date")), "dd-mm-yyyy"),
+					}
+				)
 
 	return total_outstanding_amount, due_data
 
@@ -453,32 +417,44 @@ def get_all_out_standing_amount(patient=None, total_unallocated_advance_amt=0, a
 	total_amount_to_pay = 0
 	due_data = []
 	registration_and_consultation_payments = get_payments(appointment)
-	reg_balance_pay = registration_and_consultation_payments.get("registration_fee") - registration_and_consultation_payments.get("registration_paid_amount")
-	consultation_balance_pay = registration_and_consultation_payments.get("consultation_charge") - registration_and_consultation_payments.get("consultation_paid_amount")
+	reg_balance_pay = registration_and_consultation_payments.get(
+		"registration_fee"
+	) - registration_and_consultation_payments.get("registration_paid_amount")
+	consultation_balance_pay = registration_and_consultation_payments.get(
+		"consultation_charge"
+	) - registration_and_consultation_payments.get("consultation_paid_amount")
 
 	if reg_balance_pay:
-		due_data.append({
-			"idx": str(len(due_data) + 1),
-			"service": "Registration Charge",
-			"reference_type": "Patient",
-			"reference_name": patient,
-			"payable_amount": str(registration_and_consultation_payments.get("registration_fee")),
-			"paid_amount": str(registration_and_consultation_payments.get("registration_paid_amount")),
-			"balance_amount": str(reg_balance_pay),
-			"posting_date": format_date(getdate(registration_and_consultation_payments.get("registration_pay_date")),"dd-mm-yyyy"),
-		})
+		due_data.append(
+			{
+				"idx": str(len(due_data) + 1),
+				"service": "Registration Charge",
+				"reference_type": "Patient",
+				"reference_name": patient,
+				"payable_amount": str(registration_and_consultation_payments.get("registration_fee")),
+				"paid_amount": str(registration_and_consultation_payments.get("registration_paid_amount")),
+				"balance_amount": str(reg_balance_pay),
+				"posting_date": format_date(
+					getdate(registration_and_consultation_payments.get("registration_pay_date")), "dd-mm-yyyy"
+				),
+			}
+		)
 
 	if consultation_balance_pay:
-		due_data.append({
-			"idx": str(len(due_data) + 1),
-			"service": registration_and_consultation_payments.get("consultation_item"),
-			"reference_type": "Patient Appointment",
-			"reference_name": appointment,
-			"payable_amount": str(registration_and_consultation_payments.get("consultation_charge")),
-			"paid_amount": str(registration_and_consultation_payments.get("consultation_paid_amount")),
-			"balance_amount": str(consultation_balance_pay),
-			"posting_date": format_date(getdate(registration_and_consultation_payments.get("consultation_pay_date")),"dd-mm-yyyy"),
-		})
+		due_data.append(
+			{
+				"idx": str(len(due_data) + 1),
+				"service": registration_and_consultation_payments.get("consultation_item"),
+				"reference_type": "Patient Appointment",
+				"reference_name": appointment,
+				"payable_amount": str(registration_and_consultation_payments.get("consultation_charge")),
+				"paid_amount": str(registration_and_consultation_payments.get("consultation_paid_amount")),
+				"balance_amount": str(consultation_balance_pay),
+				"posting_date": format_date(
+					getdate(registration_and_consultation_payments.get("consultation_pay_date")), "dd-mm-yyyy"
+				),
+			}
+		)
 
 	if registration_and_consultation_payments.get("balance_to_pay"):
 		total_amount_to_pay += registration_and_consultation_payments.get("balance_to_pay")
@@ -498,20 +474,26 @@ def get_all_out_standing_amount(patient=None, total_unallocated_advance_amt=0, a
 		payable_amount, paid_amount, balance_amount = 0, 0, 0
 		posting_date = item.get("posting_date")
 		if item.get("reference_type") in ["Therapy Type", "Cost Counselling"]:
-			total_amount_to_pay += flt(item.get("payable_amount") if item.get("reference_type") == "Room" else item.get("balance_pay"))
-			payable_amount, paid_amount, balance_amount = item.get("payable_amount"), item.get("paid_amount"), item.get("balance_pay")
+			total_amount_to_pay += flt(
+				item.get("payable_amount")
+				if item.get("reference_type") == "Room"
+				else item.get("balance_pay")
+			)
+			payable_amount, paid_amount, balance_amount = (
+				item.get("payable_amount"),
+				item.get("paid_amount"),
+				item.get("balance_pay"),
+			)
 			posting_date = frappe.db.get_value(
 				"Cost Counselling",
 				item.get("cost_counselling") if item.get("cost_counselling") else item.get("reference_name"),
-				"posting_date"
+				"posting_date",
 			)
 		elif item.get("rate"):
 			total_amount_to_pay += flt(item.get("rate"), 3) * flt(
 				item.get("qty") if item.get("qty") else 1, 3
 			)
-			payable_amount = flt(item.get("rate"), 3) * flt(
-				item.get("qty") if item.get("qty") else 1, 3
-			)
+			payable_amount = flt(item.get("rate"), 3) * flt(item.get("qty") if item.get("qty") else 1, 3)
 			balance_amount = flt(payable_amount, 3) - flt(paid_amount, 3)
 		else:
 			if item.get("service"):
@@ -542,16 +524,18 @@ def get_all_out_standing_amount(patient=None, total_unallocated_advance_amt=0, a
 			posting_date = frappe.db.get_value("Clinical Procedure", item.get("reference_name"), "start_date")
 
 		if balance_amount:
-			due_data.append({
-				"idx": str(len(due_data) + 1),
-				"service": item.get("service"),
-				"reference_type": item.get("reference_type"),
-				"reference_name": item.get("reference_name"),
-				"payable_amount": str(flt(payable_amount, 3)),
-				"paid_amount": str(flt(paid_amount, 3)),
-				"balance_amount": str(flt(balance_amount, 3)),
-				"posting_date": format_date(getdate(posting_date),"dd-mm-yyyy") if posting_date else "",
-			})
+			due_data.append(
+				{
+					"idx": str(len(due_data) + 1),
+					"service": item.get("service"),
+					"reference_type": item.get("reference_type"),
+					"reference_name": item.get("reference_name"),
+					"payable_amount": str(flt(payable_amount, 3)),
+					"paid_amount": str(flt(paid_amount, 3)),
+					"balance_amount": str(flt(balance_amount, 3)),
+					"posting_date": format_date(getdate(posting_date), "dd-mm-yyyy") if posting_date else "",
+				}
+			)
 
 	# encounters = frappe.db.get_all(
 	# 	"Patient Encounter", {"patient": patient, "docstatus": 1}, pluck="name"
@@ -587,7 +571,8 @@ def get_booked_room_rent(patient, company):
 		return
 
 	items_to_invoice = []
-	room_details = frappe.db.sql(f"""
+	room_details = frappe.db.sql(
+		f"""
 		select
 			ccl.cost_counselling,
 			ccl.room_type,
@@ -604,19 +589,23 @@ def get_booked_room_rent(patient, company):
 			ccl.company={frappe.db.escape(company)}
 		group by
 			ccl.cost_counselling
-	""", as_dict=True)
+	""",
+		as_dict=True,
+	)
 
 	for i in room_details:
 		if i.room and i.payable_amount > 0:
 			items_to_invoice.append(
 				{
-					"service": frappe.db.get_value("Healthcare Service Unit", i.room, "healthcare_service_unit_name"),
+					"service": frappe.db.get_value(
+						"Healthcare Service Unit", i.room, "healthcare_service_unit_name"
+					),
 					"reference_type": "Cost Counselling",
 					"reference_name": i.cost_counselling,
 					"payable_amount": i.payable_amount,
 					"paid_amount": i.paid_amount,
 					"balance_pay": i.balance_pay,
-					"cost_counselling": i.cost_counselling
+					"cost_counselling": i.cost_counselling,
 				}
 			)
 
@@ -628,7 +617,8 @@ def get_booked_therapy_sessions_to_invoice(patient, company):
 		return
 
 	items_to_invoice = []
-	sessions_details = frappe.db.sql(f"""
+	sessions_details = frappe.db.sql(
+		f"""
 		select
 			tp.name as therapy_plan,
 			tpd.custom_booked_sessions as booked_sessions,
@@ -667,7 +657,9 @@ def get_booked_therapy_sessions_to_invoice(patient, company):
 			tp.company={frappe.db.escape(company)}
 		group by
 			tp.name, tpd.therapy_type
-	""", as_dict=True)
+	""",
+		as_dict=True,
+	)
 
 	for i in sessions_details:
 		items_to_invoice.append(
@@ -679,7 +671,7 @@ def get_booked_therapy_sessions_to_invoice(patient, company):
 				"payable_amount": i.payable_amount,
 				"paid_amount": i.paid_amount,
 				"balance_pay": i.balance_pay,
-				"cost_counselling": i.cost_counselling
+				"cost_counselling": i.cost_counselling,
 			}
 		)
 
@@ -725,11 +717,7 @@ def get_current_token_status(item):
 				item["status"] = "Attending"
 				item["token_su"] = last_row.service_unit
 				item["token_su_name"] = service_unit_name
-			elif (
-				last_row.check_in_time
-				and not last_row.entry_time
-				and not last_row.exit_time
-			):
+			elif last_row.check_in_time and not last_row.entry_time and not last_row.exit_time:
 				item["status"] = "Checked In"
 				item["token_su"] = last_row.service_unit
 				item["token_su_name"] = service_unit_name
@@ -767,7 +755,7 @@ def patient_registration(
 	zip=None,
 	source=None,
 	employee=None,
-	file=None
+	file=None,
 ):
 	first_name = None if first_name in undefined_conditions else first_name
 	last_name = None if last_name in undefined_conditions else last_name
@@ -818,17 +806,11 @@ def create_vitalsigns():
 	appointment = frappe.form_dict.get("appointment")
 	patient = frappe.db.get_value("Patient Appointment", appointment, "patient")
 
-	existing_vital = frappe.db.exists(
-		"Vital Signs", {"patient": patient, "appointment": appointment}
-	)
+	existing_vital = frappe.db.exists("Vital Signs", {"patient": patient, "appointment": appointment})
 	department = frappe.db.get_value("Patient Appointment", appointment, "department")
-	vitals_service_unit = frappe.db.get_value(
-		"Medical Department", department, "service_unit"
-	)
+	vitals_service_unit = frappe.db.get_value("Medical Department", department, "service_unit")
 
-	if check_already_attending(
-		vitals_service_unit, frappe.form_dict.get("patient_token")
-	):
+	if check_already_attending(vitals_service_unit, frappe.form_dict.get("patient_token")):
 		return {"status": "Error", "message": "Another patient is currently attending!"}
 	if existing_vital:
 		docstatus = frappe.db.get_value("Vital Signs", existing_vital, "docstatus")
@@ -858,8 +840,7 @@ def create_vitalsigns():
 				(
 					stop
 					for stop in patient_token.patient_journey_stops
-					if stop.get("status") == "Checked In"
-					and stop.get("service_unit") == vitals_service_unit
+					if stop.get("status") == "Checked In" and stop.get("service_unit") == vitals_service_unit
 				),
 				None,
 			)
@@ -877,9 +858,7 @@ def create_vitalsigns():
 					"status": "In Progress",
 					"entry_time": now_datetime(),
 					"user": frappe.session.user,
-					"time_in_queue": time_diff_in_hours(
-						journey_stop.entry_time, journey_stop.check_in_time
-					),
+					"time_in_queue": time_diff_in_hours(journey_stop.entry_time, journey_stop.check_in_time),
 				},
 			)
 
@@ -976,17 +955,12 @@ def submit_vitalsigns():
 	frappe.db.commit()
 
 	# Handle Patient Token without creating a new one
-	patient_token = frappe.db.get_value(
-		"Patient Appointment", appointment, "patient_token"
-	)
+	patient_token = frappe.db.get_value("Patient Appointment", appointment, "patient_token")
 
 	if patient_token:
 		token_doc = frappe.get_doc("Patient Token", patient_token)
 
-		if (
-			token_doc.status not in ["Expired", "Checked Out"]
-			and token_doc.patient_journey_stops
-		):
+		if token_doc.status not in ["Expired", "Checked Out"] and token_doc.patient_journey_stops:
 			last_row = token_doc.patient_journey_stops[-1]
 			current_time = frappe.utils.now()
 
@@ -1019,9 +993,7 @@ def get_vitals(appointment):
 	if not appointment:
 		return
 
-	vital = frappe.db.exists(
-		"Vital Signs", {"appointment": appointment, "docstatus": ["!=", 2]}
-	)
+	vital = frappe.db.exists("Vital Signs", {"appointment": appointment, "docstatus": ["!=", 2]})
 
 	if vital:
 		return frappe.get_doc("Vital Signs", vital)
@@ -1037,9 +1009,12 @@ def create_payment_entry(
 	amount=0,
 	registration_fee=0,
 	consultation_amount=0,
-	reference_date=getdate(),
+	reference_date=None,
 	reference_no=None,
 ):
+	if not reference_date:
+		reference_date = getdate()
+
 	if isinstance(amount, str):
 		amount = flt(amount)
 
@@ -1051,12 +1026,8 @@ def create_payment_entry(
 	if isinstance(consultation_amount, str):
 		consultation_amount = flt(consultation_amount)
 
-	reference_date = (
-		getdate() if reference_date in ["", "null", "undeffined"] else reference_date
-	)
-	patient = frappe.db.get_value(
-		"Patient Appointment", reference_appointment, "patient"
-	)
+	reference_date = getdate() if reference_date in ["", "null", "undeffined"] else reference_date
+	patient = frappe.db.get_value("Patient Appointment", reference_appointment, "patient")
 
 	appointment_details = get_payments(reference_appointment)
 	(
@@ -1131,29 +1102,28 @@ def make_payment_entry(
 	reference_appointment=None,
 	mode_of_payment=None,
 	amount=0,
-	reference_date=getdate(),
+	reference_date=None,
 	reference_no=None,
 	is_registration_payment=False,
 	is_advance=False,
 ):
+	if not reference_date:
+		reference_date = getdate()
+
 	outstanding_invoices = []
 	if is_registration_payment:
-		outstanding_invoices = get_outstanding_invoices('Patient', patient)
+		outstanding_invoices = get_outstanding_invoices("Patient", patient)
 	elif not is_advance:
-		outstanding_invoices = get_outstanding_invoices('Patient Appointment', reference_appointment)
+		outstanding_invoices = get_outstanding_invoices("Patient Appointment", reference_appointment)
 
-	company = frappe.db.get_value(
-		"Patient Appointment", reference_appointment, "company"
-	)
+	company = frappe.db.get_value("Patient Appointment", reference_appointment, "company")
 	pe_doc = frappe.new_doc("Payment Entry")
 	pe_doc.patient = patient
 	pe_doc.payment_type = "Receive"
 	pe_doc.posting_date = getdate()
 	pe_doc.reference_no = reference_no
 	pe_doc.reference_date = reference_date
-	pe_doc.custom_reference_appointment = (
-		reference_appointment if not is_advance else None
-	)
+	pe_doc.custom_reference_appointment = reference_appointment if not is_advance else None
 	pe_doc.register_paid = is_registration_payment
 	pe_doc.mode_of_payment = mode_of_payment
 	pe_doc.paid_to = frappe.db.get_value(
@@ -1188,27 +1158,31 @@ def make_payment_entry(
 	)
 	if outstanding_invoices and len(outstanding_invoices):
 		for i in outstanding_invoices:
-			pe_doc.append("references", {
-				"reference_doctype": "Sales Invoice",
-				"reference_name": i.sales_invoice,
-				"total_amount": i.total_amount,
-				"outstanding_amount": i.outstanding_amount,
-				"allocated_amount": pe_doc.paid_amount if pe_doc.paid_amount <= i.outstanding_amount else i.outstanding_amount
-			})
+			pe_doc.append(
+				"references",
+				{
+					"reference_doctype": "Sales Invoice",
+					"reference_name": i.sales_invoice,
+					"total_amount": i.total_amount,
+					"outstanding_amount": i.outstanding_amount,
+					"allocated_amount": pe_doc.paid_amount
+					if pe_doc.paid_amount <= i.outstanding_amount
+					else i.outstanding_amount,
+				},
+			)
 
 	pe_doc.insert(ignore_permissions=True)
 	pe_doc.submit()
 
 	if is_registration_payment:
-		frappe.db.set_value(
-			"Patient", patient, {"payment_entry_created": 1, "status": "Active"}
-		)
+		frappe.db.set_value("Patient", patient, {"payment_entry_created": 1, "status": "Active"})
 
 	frappe.db.commit()
 
 
 def get_outstanding_invoices(reference_dt, reference_dn):
-	return frappe.db.sql(f"""
+	return frappe.db.sql(
+		f"""
 		select
 			si.name as sales_invoice,
 			si.grand_total as total_amount,
@@ -1221,7 +1195,9 @@ def get_outstanding_invoices(reference_dt, reference_dn):
 			si.outstanding_amount>0 and
 			sii.reference_dt={frappe.db.escape(reference_dt)} and
 			sii.reference_dn={frappe.db.escape(reference_dn)}
-	""", as_dict=True)
+	""",
+		as_dict=True,
+	)
 
 
 @frappe.whitelist(allow_guest=True)
@@ -1241,9 +1217,10 @@ def get_payments(appointment):
 	if frappe.db.get_single_value("Healthcare Settings", "collect_registration_fee"):
 		fee = frappe.db.get_single_value("Healthcare Settings", "registration_fee")
 		if (
-			(not appointment_doc.custom_registration_fee_paid
-			and not appointment_doc.custom_registration_fee_invoiced)
-			or frappe.db.exists("Payment Entry", {"docstatus": 1, "custom_reference_appointment": appointment, "register_paid": 1})
+			not appointment_doc.custom_registration_fee_paid
+			and not appointment_doc.custom_registration_fee_invoiced
+		) or frappe.db.exists(
+			"Payment Entry", {"docstatus": 1, "custom_reference_appointment": appointment, "register_paid": 1}
 		):
 			registration_fee = fee or 0
 		else:
@@ -1257,7 +1234,7 @@ def get_payments(appointment):
 			"docstatus": ["!=", 2],
 			"register_paid": 1,
 			"party": customer,
-			"custom_reference_appointment": appointment
+			"custom_reference_appointment": appointment,
 		},
 		fields=["sum(paid_amount) as amount", "posting_date"],
 	)
@@ -1269,9 +1246,7 @@ def get_payments(appointment):
 
 	item = None
 	if appointment_doc.practitioner and is_billable:
-		default_price_list = frappe.db.get_value(
-			"Patient", appointment_doc.patient, "default_price_list"
-		)
+		default_price_list = frappe.db.get_value("Patient", appointment_doc.patient, "default_price_list")
 		if appointment_doc.inpatient_record:
 			item = frappe.db.get_value(
 				"Healthcare Practitioner",
@@ -1285,9 +1260,7 @@ def get_payments(appointment):
 				"op_consulting_charge_item",
 			)
 		if not item:
-			item = frappe.db.get_single_value(
-				"Healthcare Settings", "op_consulting_charge_item"
-			)
+			item = frappe.db.get_single_value("Healthcare Settings", "op_consulting_charge_item")
 
 		consultation_charge = frappe.db.get_value(
 			"Item Price",
@@ -1296,7 +1269,9 @@ def get_payments(appointment):
 		)
 
 		if not consultation_charge:
-			item, consultation_charge = get_practitioner_billing_details(appointment_doc.practitioner, appointment_doc.inpatient_record)
+			item, consultation_charge = get_practitioner_billing_details(
+				appointment_doc.practitioner, appointment_doc.inpatient_record
+			)
 
 	total_amount = consultation_charge + registration_fee
 
@@ -1310,9 +1285,7 @@ def get_payments(appointment):
 		fields=["sum(paid_amount) as total_amount", "posting_date"],
 	)
 	consultation_paid_amount = 0
-	if paid_consultation_amount_details and paid_consultation_amount_details[0].get(
-		"total_amount"
-	):
+	if paid_consultation_amount_details and paid_consultation_amount_details[0].get("total_amount"):
 		consultation_paid_amount = paid_consultation_amount_details[0]["total_amount"]
 		consultation_pay_date = paid_consultation_amount_details[0]["posting_date"]
 
@@ -1334,9 +1307,7 @@ def get_payments(appointment):
 
 @frappe.whitelist(allow_guest=True)
 def get_mode_of_payments():
-	return frappe.db.get_all(
-		"Mode of Payment", fields=["name as label", "name as value"]
-	)
+	return frappe.db.get_all("Mode of Payment", fields=["name as label", "name as value"])
 
 
 # get therapy plan
@@ -1372,16 +1343,12 @@ def get_therapy_type(patient, therapy_plan):
 
 	therapy_types = []
 	if not therapy_plan:
-		therapy_types = frappe.get_all(
-			"Therapy Type", fields=["name as label", "name as value"]
-		)
+		therapy_types = frappe.get_all("Therapy Type", fields=["name as label", "name as value"])
 	else:
 		doc = frappe.get_doc("Therapy Plan", therapy_plan)
 		for entry in doc.therapy_plan_details:
 			if entry.custom_booked_sessions > entry.sessions_completed:
-				therapy_types.append(
-					{"label": entry.therapy_type, "value": entry.therapy_type}
-				)
+				therapy_types.append({"label": entry.therapy_type, "value": entry.therapy_type})
 
 	return therapy_types
 
@@ -1401,14 +1368,10 @@ def get_patient_data_for_services(appointment):
 			"status": "active-Medication Request Status",
 			"billing_status": ["!=", "Invoiced"],
 		},
-		fields=["order_group as label", "order_group as value"]
+		fields=["order_group as label", "order_group as value"],
 	)
 
-	return {
-		"company": company,
-		"customer": customer,
-		"patient_encounters": patient_encounters
-	}
+	return {"company": company, "customer": customer, "patient_encounters": patient_encounters}
 
 
 # Create healthcare services Sales invoice
@@ -1421,10 +1384,12 @@ def create_services_sales_invoice(
 	payments=None,
 	use_advance_amount=False,
 	customer_advance_amount=0,
-	encounter=None
+	encounter=None,
 ):
 	use_advance_amount = False if use_advance_amount in undefined_conditions else True
-	customer_advance_amount = 0 if customer_advance_amount in undefined_conditions else flt(customer_advance_amount)
+	customer_advance_amount = (
+		0 if customer_advance_amount in undefined_conditions else flt(customer_advance_amount)
+	)
 	customer = frappe.db.get_value("Patient", patient, "customer")
 	payments = None if payments in undefined_conditions else payments
 	encounter = None if encounter in undefined_conditions else encounter
@@ -1436,16 +1401,14 @@ def create_services_sales_invoice(
 	sales_invoice.patient = patient
 	sales_invoice.customer = customer
 	sales_invoice.due_date = getdate()
-	sales_invoice.company = company,
+	sales_invoice.company = (company,)
 	sales_invoice.custom_encounter = encounter
 	sales_invoice.custom_consultation_date = enc_doc.get("encounter_date")
 	sales_invoice.custom_consultant_name = enc_doc.get("practitioner_name")
 	sales_invoice.ref_practitioner = enc_doc.get("practitioner")
 	if encounter and enc_doc.get("custom_packages"):
 		for i in enc_doc.get("custom_packages"):
-			sales_invoice.append("custom_packages", {
-				"package": i.package
-			})
+			sales_invoice.append("custom_packages", {"package": i.package})
 	sales_invoice.debit_to = get_receivable_account(company)
 	sales_invoice.disable_rounded_total = 1
 
@@ -1498,9 +1461,7 @@ def get_service_list(patient, customer, company):
 	if (
 		patient
 		and not frappe.db.get_value("Patient", patient, "invoiced")
-		and frappe.db.get_single_value(
-			"Healthcare Settings", "collect_registration_fee"
-		)
+		and frappe.db.get_single_value("Healthcare Settings", "collect_registration_fee")
 	):
 		fee = frappe.db.get_single_value("Healthcare Settings", "registration_fee")
 		all_services.append(
@@ -1540,9 +1501,7 @@ def get_service_list(patient, customer, company):
 			item["qty"] = str(flt(item.get("qty"), 3))
 
 		if not item.get("reference_type") == "Patient":
-			item["rate"] = str(
-				price[0].get("price_list_rate") if price and len(price) else 0
-			)
+			item["rate"] = str(price[0].get("price_list_rate") if price and len(price) else 0)
 			item["posting_date"] = format_date(
 				getdate(
 					frappe.db.get_value(
@@ -1617,16 +1576,12 @@ def get_therapy_sessions_to_invoice(patient, company):
 		},
 	)
 	for therapy in therapy_sessions:
-		if therapy.therapy_type and frappe.db.get_value(
-			"Therapy Type", therapy.therapy_type, "is_billable"
-		):
+		if therapy.therapy_type and frappe.db.get_value("Therapy Type", therapy.therapy_type, "is_billable"):
 			therapy_sessions_to_invoice.append(
 				{
 					"reference_type": "Therapy Session",
 					"reference_name": therapy.name,
-					"service": frappe.db.get_value(
-						"Therapy Type", therapy.therapy_type, "item"
-					),
+					"service": frappe.db.get_value("Therapy Type", therapy.therapy_type, "item"),
 				}
 			)
 
@@ -1666,7 +1621,7 @@ def get_service_requests_to_invoice(patient, company):
 					"service": item,
 					"qty": service_request.quantity if service_request.quantity else 1,
 					"posting_date": service_request.order_date,
-					"rate": price[0].get("price_list_rate") if price and len(price) else rate
+					"rate": price[0].get("price_list_rate") if price and len(price) else rate,
 				}
 			)
 
@@ -1689,9 +1644,7 @@ def get_prescriptions(encounter, customer):
 
 		item["quantity"] = str(item.get("quantity"))
 		item["posting_date"] = format_date(getdate(date), "dd-mm-yyyy")
-		item["rate"] = str(
-			price[0].get("price_list_rate") if price and len(price) else 0
-		)
+		item["rate"] = str(price[0].get("price_list_rate") if price and len(price) else 0)
 
 	return prescription_to_invoice
 
@@ -1755,9 +1708,7 @@ def get_user_role():
 def set_status(id, status):
 	appointment = frappe.get_doc("Patient Appointment", id)
 	if status == "Checked In":
-		service_unit = frappe.db.get_value(
-			"Medical Department", appointment.department, "service_unit"
-		)
+		service_unit = frappe.db.get_value("Medical Department", appointment.department, "service_unit")
 
 		message = check_and_insert_token(
 			"Patient Appointment",
@@ -1770,9 +1721,7 @@ def set_status(id, status):
 			return message
 	else:
 		update_status(id, status)
-		return {
-			"message": f"Patient {appointment.patient_name} has {status} Appointment {id}"
-		}
+		return {"message": f"Patient {appointment.patient_name} has {status} Appointment {id}"}
 
 
 # Patient Encounter Routing
@@ -1809,9 +1758,9 @@ def patient_appointment(from_kiosk=True):
 	if from_kiosk:
 		new_appointment.appointment_type = default_appointment_type
 	else:
-		new_appointment.appointment_type = frappe.form_dict.get(
-			"appointment_type"
-		) or default_appointment_type
+		new_appointment.appointment_type = (
+			frappe.form_dict.get("appointment_type") or default_appointment_type
+		)
 	new_appointment.appointment_for = frappe.db.get_value(
 		"Appointment Type", new_appointment.appointment_type, "allow_booking_for"
 	)
@@ -1825,20 +1774,14 @@ def patient_appointment(from_kiosk=True):
 	practitioner = frappe.get_doc("Healthcare Practitioner", frappe.form_dict.get("practitioner"))
 	new_appointment.practitioner = practitioner.name
 	new_appointment.department = practitioner.department
-	new_appointment.appointment_date = frappe.form_dict.get(
-		"date"
-	) or frappe.form_dict.get("daterangevalue")
+	new_appointment.appointment_date = frappe.form_dict.get("date") or frappe.form_dict.get("daterangevalue")
 	new_appointment.appointment_time = frappe.form_dict.get("slot")
 
 	date = frappe.utils.getdate(frappe.form_dict.get("date"))
 	weekday = date.strftime("%A")
 	for schedule_entry in practitioner.practitioner_schedules:
-		practitioner_schedule = frappe.get_doc(
-			"Practitioner Schedule", schedule_entry.schedule
-		)
-		service_unit = frappe.db.get_value(
-			"Healthcare Service Unit", schedule_entry.service_unit, "name"
-		)
+		practitioner_schedule = frappe.get_doc("Practitioner Schedule", schedule_entry.schedule)
+		service_unit = frappe.db.get_value("Healthcare Service Unit", schedule_entry.service_unit, "name")
 
 		if practitioner_schedule and not practitioner_schedule.disabled:
 			available_slots = []
@@ -1916,9 +1859,7 @@ def new_error_log(error_title, error_message):
 
 @frappe.whitelist()
 def get_boarding_pass_print_format():
-	print_format = frappe.db.get_single_value(
-		"Marley Frontend Settings", "default_boarding_pass_print"
-	)
+	print_format = frappe.db.get_single_value("Marley Frontend Settings", "default_boarding_pass_print")
 
 	return print_format if print_format else False
 
@@ -1926,9 +1867,7 @@ def get_boarding_pass_print_format():
 # consultation payment print format
 @frappe.whitelist()
 def get_consultation_payment_entry_print_format():
-	print_format = frappe.db.get_single_value(
-		"Marley Frontend Settings", "default_payment_entry_print"
-	)
+	print_format = frappe.db.get_single_value("Marley Frontend Settings", "default_payment_entry_print")
 
 	return print_format if print_format else False
 
@@ -1950,9 +1889,7 @@ def fetch_mode_type(mode):
 # get default appointment type
 @frappe.whitelist(allow_guest=True)
 def get_default_appointment():
-	return frappe.db.get_single_value(
-		"Marley Frontend Settings", "default_appointment_type"
-	)
+	return frappe.db.get_single_value("Marley Frontend Settings", "default_appointment_type")
 
 
 def check_is_billable(appointment):
@@ -1968,7 +1905,7 @@ def check_is_billable(appointment):
 		else:
 			validity = get_fee_validity(appointment.name, appointment.appointment_date, ignore_status=True)
 			if not validity:
-				is_billable=True
+				is_billable = True
 	else:
 		is_billable = True
 

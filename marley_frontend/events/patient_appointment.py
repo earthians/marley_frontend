@@ -1,4 +1,5 @@
 import frappe
+
 from marley_frontend.marley_frontend.doctype.patient_token.patient_token import insert_token
 
 

@@ -2,9 +2,7 @@ import frappe
 
 
 def execute():
-	exists = frappe.db.exists(
-		"Mode of Payment", "RazorPay"
-	)
+	exists = frappe.db.exists("Mode of Payment", "RazorPay")
 
 	if not exists:
 		mop_doc = frappe.new_doc("Mode of Payment")

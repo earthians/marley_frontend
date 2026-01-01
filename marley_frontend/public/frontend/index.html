@@ -14,13 +14,13 @@
     <div id="popovers"></div>
 
     <script> window.csrf_token = '{{ csrf_token }}'; </script>
-    
-  
+
+
           <script>
               {% for key in boot %}
               window["{{ key }}"] = {{ boot[key] | tojson }};
               {% endfor %}
           </script>
           </body>
-          
+
 </html>

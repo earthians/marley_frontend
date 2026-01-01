@@ -54,7 +54,7 @@ def get_service_units():
 	service_units = (
 		frappe.qb.from_(token)
 		.select(token.current_service_unit)
-		.where((token.status == "Checked In"))
+		.where(token.status == "Checked In")
 		.groupby(token.current_service_unit)
 	).run(as_dict=1)
 	if service_units:
@@ -118,7 +118,7 @@ def get_data(service_units):
 				data.get("service_unit"),
 				"healthcare_service_unit_name",
 			)
-			if not data.get("position") in position:
+			if data.get("position") not in position:
 				out_token_list.append(
 					{
 						data.get("service_unit"): data.get("token")[0],

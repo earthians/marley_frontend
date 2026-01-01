@@ -91,7 +91,7 @@ def execute():
 				"read_only": False,
 				"insert_after": "token_series",
 				"no_copy": True,
-				"default": 5
+				"default": 5,
 			},
 		],
 		"Healthcare Service Unit": [
@@ -120,7 +120,6 @@ def execute():
 				"insert_after": "uid",
 				"unique": True,
 				"in_standard_filter": True,
-				
 			},
 			{
 				"fieldname": "custom_passport_number",
@@ -149,14 +148,14 @@ def execute():
 			},
 		],
 		"Payment Entry": [
-            {
-                "fieldname": "register_paid",
-                "label": "Registration Paid",
-                "fieldtype": "Check",
-                "insert_after": "paid_amount",
-                "no_copy": True,
-            },
-        ]
+			{
+				"fieldname": "register_paid",
+				"label": "Registration Paid",
+				"fieldtype": "Check",
+				"insert_after": "paid_amount",
+				"no_copy": True,
+			},
+		],
 	}
 
 	create_custom_fields(custom_field)

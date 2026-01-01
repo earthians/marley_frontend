@@ -17,7 +17,7 @@ add_to_apps_screen = [
 		"logo": "/assets/healthcare/images/healthcare.svg",
 		"title": "Marley Frontend",
 		"route": "/app/marley_frontend",
-		"has_permission": "erpnext.check_app_permission"
+		"has_permission": "erpnext.check_app_permission",
 	}
 ]
 
@@ -44,8 +44,8 @@ add_to_apps_screen = [
 
 # include js in doctype views
 doctype_js = {
-	"Healthcare Service Unit" : "public/js/healthcare_service_unit.js",
-	"Vital Signs" : "public/js/vital_signs.js",
+	"Healthcare Service Unit": "public/js/healthcare_service_unit.js",
+	"Vital Signs": "public/js/vital_signs.js",
 	"Patient Appointment": "public/js/patient_appointment.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
@@ -68,14 +68,7 @@ doctype_js = {
 # 	"Role": "home_page"
 # }
 
-fixtures = [
-    {
-        "dt": "Custom Field",
-        "filters": [
-            ["module", "=", "Marley Frontend"]
-        ]
-    }
-]
+fixtures = [{"dt": "Custom Field", "filters": [["module", "=", "Marley Frontend"]]}]
 
 # Generators
 # ----------
@@ -157,24 +150,24 @@ after_install = "marley_frontend.install.after_install"
 # ---------------
 
 scheduler_events = {
-    "daily": [
-        "marley_frontend.marley_frontend.doctype.patient_token.patient_token.update_token_status",
-    ],
-# 	"all": [
-# 		"marley_frontend.tasks.all"
-# 	],
-# 	"daily": [
-# 		"marley_frontend.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"marley_frontend.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"marley_frontend.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"marley_frontend.tasks.monthly"
-# 	],
+	"daily": [
+		"marley_frontend.marley_frontend.doctype.patient_token.patient_token.update_token_status",
+	],
+	# 	"all": [
+	# 		"marley_frontend.tasks.all"
+	# 	],
+	# 	"daily": [
+	# 		"marley_frontend.tasks.daily"
+	# 	],
+	# 	"hourly": [
+	# 		"marley_frontend.tasks.hourly"
+	# 	],
+	# 	"weekly": [
+	# 		"marley_frontend.tasks.weekly"
+	# 	],
+	# 	"monthly": [
+	# 		"marley_frontend.tasks.monthly"
+	# 	],
 }
 
 # Testing
@@ -253,7 +246,9 @@ scheduler_events = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
 
-website_route_rules = [{"from_route": "/healthcare/<path:app_path>", "to_route": "healthcare"},]
+website_route_rules = [
+	{"from_route": "/healthcare/<path:app_path>", "to_route": "healthcare"},
+]
 
 standard_dropdown_items = [
 	{

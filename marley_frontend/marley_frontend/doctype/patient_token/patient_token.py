@@ -1,15 +1,15 @@
 # Copyright (c) 2023, earthians and contributors
 # For license information, please see license.txt
 
-import frappe
+import random
+import string
 
+import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.naming import make_autoname
 from frappe.utils import getdate, now_datetime, time_diff_in_hours
 
-import string
-import random
 
 class PatientToken(Document):
 	def before_insert(self):
@@ -20,59 +20,61 @@ class PatientToken(Document):
 		self.token_number = random_token
 		# generate token number
 		self.token_name = make_autoname(
-		f"{self.token_name if self.token_name.endswith('-') else f'{self.token_name}-'}.#####", '', '')
+			f"{self.token_name if self.token_name.endswith('-') else f'{self.token_name}-'}.#####", "", ""
+		)
 
 	def validate(self):
-		'''
+		"""
 		update status and total time
 		TODO: Validate order_by position
-		'''
-		if self.status in ['Scheduled', 'Checked In', 'No Show']:
-			status = ''
+		"""
+		if self.status in ["Scheduled", "Checked In", "No Show"]:
+			status = ""
 			total_time_in_queue = 0
 
 			for journey_stop in self.patient_journey_stops:
-				if journey_stop.status == 'Scheduled' and status == '':
-					status = 'Scheduled'
+				if journey_stop.status == "Scheduled" and status == "":
+					status = "Scheduled"
 					break
 
-				elif journey_stop.status == 'Scheduled' and status == 'Checked Out':
-					status = 'Checked In'
+				elif journey_stop.status == "Scheduled" and status == "Checked Out":
+					status = "Checked In"
 					break
 
-				elif journey_stop.status == 'Checked In':
-					status = 'Checked In'
+				elif journey_stop.status == "Checked In":
+					status = "Checked In"
 					break
 
-				elif journey_stop.status == 'In Progress':
-					status = 'Checked In'
+				elif journey_stop.status == "In Progress":
+					status = "Checked In"
 					break
 
-				elif journey_stop.status == 'Checked Out':
+				elif journey_stop.status == "Checked Out":
 					# check_in if scheduled stop is auto_check_in enabled
-					status = 'Active'
+					status = "Active"
 					total_time_in_queue += journey_stop.time_in_queue
 
-				elif journey_stop.status == 'No Show':
-					status = 'No Show'
+				elif journey_stop.status == "No Show":
+					status = "No Show"
 
 			if getdate(self.posting_date) > getdate():
 				status = "Expired"
 			# set token status
 			# NOTE: if status is Checked Out all stops should be Checked Out, mark Exited
-			self.status = 'Exited' if status == 'Checked Out' else status
+			self.status = "Exited" if status == "Checked Out" else status
 
 			self.total_time_in_queue = total_time_in_queue
- 
+
 	@frappe.whitelist()
 	def check_in(self, queue_dn=None):
 		if self.status == "No Show":
 			reference_doc = frappe.get_doc(self.reference_dt, self.reference_dn)
 			if queue_dn != reference_doc.service_unit:
-				frappe.throw(_('Service Unit mismatch'))
+				frappe.throw(_("Service Unit mismatch"))
 
 			reqd_token_no, priority, next_token = check_and_find_last_token_number(reference_doc, "No Show")
-			self.append("patient_journey_stops",
+			self.append(
+				"patient_journey_stops",
 				{
 					"reference_doctype": self.reference_dt,
 					"reference_docname": self.reference_dn,
@@ -81,33 +83,42 @@ class PatientToken(Document):
 					"service_unit": reference_doc.service_unit,
 					"medical_department": reference_doc.department,
 					"practitioner": reference_doc.practitioner,
-					'user': frappe.session.user,
-					}
-				)
+					"user": frappe.session.user,
+				},
+			)
 			self.current_service_unit = queue_dn
 			if reqd_token_no:
 				self.next = reqd_token_no.get("next")
-				frappe.db.set_value("Patient Token", reqd_token_no.get("name"), "next", self.name, update_modified=False)
+				frappe.db.set_value(
+					"Patient Token", reqd_token_no.get("name"), "next", self.name, update_modified=False
+				)
 				frappe.publish_realtime("reload_practitioner_screen")
 
 			self.save()
 
 	@frappe.whitelist()
 	def attend(self, queue_dn):
-		'''
+		"""
 		mark the stop as In Progress
-		'''
+		"""
 		journey_stop = next(
-			(stop for stop in self.patient_journey_stops if stop.get('status') == 'Checked In' and stop.get('service_unit') == queue_dn), None)
-		message = f'Not Checked In to {queue_dn}, please Check In and try again'
+			(
+				stop
+				for stop in self.patient_journey_stops
+				if stop.get("status") == "Checked In" and stop.get("service_unit") == queue_dn
+			),
+			None,
+		)
+		message = f"Not Checked In to {queue_dn}, please Check In and try again"
 		if not journey_stop:
-			if not "Admin" in frappe.get_roles(frappe.session.user):
+			if "Admin" not in frappe.get_roles(frappe.session.user):
 				frappe.throw(_(message))
 			else:
 				frappe.msgprint(_(message))
 
-		journey_stop_exists = frappe.db.sql("""
-			SELECT pjs.name 
+		journey_stop_exists = frappe.db.sql(
+			"""
+			SELECT pjs.name
 			FROM `tabPatient Journey Stop` pjs
 				JOIN `tabPatient Token` pt ON pjs.parent = pt.name
 			WHERE pjs.status = 'In Progress'
@@ -116,44 +127,49 @@ class PatientToken(Document):
 				AND pt.status != 'Expired'
 				AND pt.posting_date=%s
 			LIMIT 1
-		""", (journey_stop.service_unit, journey_stop.practitioner, getdate(self.posting_date)))
+		""",
+			(journey_stop.service_unit, journey_stop.practitioner, getdate(self.posting_date)),
+		)
 
 		if journey_stop_exists:
-			frappe.throw(_('Another patient is currently attending!'))
+			frappe.throw(_("Another patient is currently attending!"))
 
-		frappe.db.set_value(journey_stop.doctype, journey_stop.name,{
-			'status': 'In Progress',
-			'entry_time': now_datetime(),
-			'user': frappe.session.user,
-			'time_in_queue': time_diff_in_hours(
-				journey_stop.entry_time,
-				journey_stop.check_in_time
-			)
-		})
+		frappe.db.set_value(
+			journey_stop.doctype,
+			journey_stop.name,
+			{
+				"status": "In Progress",
+				"entry_time": now_datetime(),
+				"user": frappe.session.user,
+				"time_in_queue": time_diff_in_hours(journey_stop.entry_time, journey_stop.check_in_time),
+			},
+		)
 
 		frappe.db.set_value("Patient Token", self.next, "head", 1)
-		frappe.db.set_value(self.doctype, self.name, 'head', 0)
+		frappe.db.set_value(self.doctype, self.name, "head", 0)
 		frappe.publish_realtime("update_tokens")
 		frappe.publish_realtime("reload_practitioner_screen")
 
 	@frappe.whitelist()
 	def check_out(self, queue_dn):
-
 		journey_stop = next(
-			(stop for stop in self.patient_journey_stops if stop.get('status') == 'In Progress' and stop.get('service_unit') == queue_dn), None)
-
-		if not journey_stop:
-			frappe.throw(_('No queues to Check Out, please contact System Administrator'))
-
-		journey_stop.status = 'Checked Out'
-		journey_stop.exit_time = now_datetime()
-
-		journey_stop.time_to_complete = time_diff_in_hours(
-			journey_stop.exit_time,
-			journey_stop.entry_time
+			(
+				stop
+				for stop in self.patient_journey_stops
+				if stop.get("status") == "In Progress" and stop.get("service_unit") == queue_dn
+			),
+			None,
 		)
 
-		self.current_service_unit = ''
+		if not journey_stop:
+			frappe.throw(_("No queues to Check Out, please contact System Administrator"))
+
+		journey_stop.status = "Checked Out"
+		journey_stop.exit_time = now_datetime()
+
+		journey_stop.time_to_complete = time_diff_in_hours(journey_stop.exit_time, journey_stop.entry_time)
+
+		self.current_service_unit = ""
 
 		self.save(ignore_permissions=True)
 		frappe.publish_realtime("update_tokens")
@@ -162,12 +178,13 @@ class PatientToken(Document):
 	@frappe.whitelist()
 	def no_show(self):
 		journey_stop = next(
-			(stop for stop in self.patient_journey_stops if stop.get('status') == 'Checked In'), None)
+			(stop for stop in self.patient_journey_stops if stop.get("status") == "Checked In"), None
+		)
 
 		if not journey_stop:
-			frappe.throw(_('No matching queues, please contact System Administrator'))
+			frappe.throw(_("No matching queues, please contact System Administrator"))
 
-		journey_stop.status = 'No Show'
+		journey_stop.status = "No Show"
 		# self.current_service_unit = ''
 		if self.head:
 			self.head = 0
@@ -179,29 +196,30 @@ class PatientToken(Document):
 		if not self.next:
 			return
 
-		next_token = frappe.get_doc('Patient Token', self.next)
+		next_token = frappe.get_doc("Patient Token", self.next)
 		journey_stop = next(
-			(stop for stop in self.patient_journey_stops if stop.get('status') == 'Checked In'), None)
+			(stop for stop in self.patient_journey_stops if stop.get("status") == "Checked In"), None
+		)
 
 		if journey_stop:
-			journey_stop.db_set('time_at_head', now_datetime())
-			next_token.db_set('head', True)
+			journey_stop.db_set("time_at_head", now_datetime())
+			next_token.db_set("head", True)
 
 
 @frappe.whitelist(allow_guest=True)
 def insert_token(ref_doc, ref_name, service_unit=None, slot_position=None):
 	if not service_unit or slot_position is None:
 		return
-		
+
 	reference_doc = frappe.get_doc(ref_doc, ref_name)
 
 	active_token = frappe.db.exists(
-		"Patient Token", 
+		"Patient Token",
 		{
-			"patient": reference_doc.patient, 
-			"status": ["in", ["Checked In", "Active"]], 
-			"reference_dn": ref_name
-		}
+			"patient": reference_doc.patient,
+			"status": ["in", ["Checked In", "Active"]],
+			"reference_dn": ref_name,
+		},
 	)
 
 	naming_series = frappe.db.get_single_value("Healthcare Settings", "token_series")
@@ -213,9 +231,9 @@ def insert_token(ref_doc, ref_name, service_unit=None, slot_position=None):
 			"Patient Token",
 			filters={"status": ["in", ["Checked In", "Active"]]},
 			fields=["name", "slot_position", "next"],
-			order_by="slot_position"
+			order_by="slot_position",
 		)
-		
+
 		patient_token = frappe.new_doc("Patient Token")
 		patient_token.patient = reference_doc.patient
 		patient_token.token_name = naming_series
@@ -223,7 +241,7 @@ def insert_token(ref_doc, ref_name, service_unit=None, slot_position=None):
 		patient_token.posting_date = now_datetime()
 		patient_token.reference_dt = ref_doc
 		patient_token.reference_dn = ref_name
-		
+
 		if not existing_tokens:
 			patient_token.head = 1
 		else:
@@ -232,7 +250,7 @@ def insert_token(ref_doc, ref_name, service_unit=None, slot_position=None):
 				if float(token.slot_position) > float(slot_position):
 					break
 				prev_token = token
-			
+
 			if prev_token:
 				patient_token.next = prev_token.next
 				patient_token.head = 0
@@ -254,18 +272,20 @@ def insert_token(ref_doc, ref_name, service_unit=None, slot_position=None):
 				"check_in_time": now_datetime(),
 				"service_unit": service_unit,
 				"medical_department": reference_doc.get("department"),
-				"practitioner": reference_doc.get("ref_practitioner") if ref_doc == "Sales Invoice" else reference_doc.get("practitioner"),
-				'user': frappe.session.user,
-			}
+				"practitioner": reference_doc.get("ref_practitioner")
+				if ref_doc == "Sales Invoice"
+				else reference_doc.get("practitioner"),
+				"user": frappe.session.user,
+			},
 		)
 		patient_token.save(ignore_permissions=True)
 		frappe.msgprint(f"Token {frappe.bold(patient_token.name)} has generated", alert=True)
-		
+
 	if patient_token:
 		frappe.db.set_value(ref_doc, ref_name, "patient_token", patient_token.name)
-		
+
 	if ref_doc == "Patient Appointment":
-		frappe.db.set_value("Patient Appointment", ref_name, "status", "Confirmed")     
+		frappe.db.set_value("Patient Appointment", ref_name, "status", "Confirmed")
 	frappe.db.commit()
 	frappe.publish_realtime("update_tokens")
 	frappe.publish_realtime("reload_practitioner_screen")
@@ -295,41 +315,52 @@ def check_and_find_last_token_number(reference_doc, status=None):
 
 	token_list = frappe.db.sql(query, as_dict=1)
 	priority = actual_priority
-	if token_list and len(token_list)>0:
-		if priority and int(priority)<=len(token_list):
+	if token_list and len(token_list) > 0:
+		if priority and int(priority) <= len(token_list):
 			# only looks for same or more priority tokens
 			current_row = None
-			priority_list = [row for row in token_list if (row['priority_level'] > 0 and row['priority_level']<=int(priority))]
+			priority_list = [
+				row
+				for row in token_list
+				if (row["priority_level"] > 0 and row["priority_level"] <= int(priority))
+			]
 			if priority_list and not status == "No Show":
 				current_row = get_the_last_priority_token(priority_list, 2)
 			else:
-				current_row = next((row for row in token_list if (row.get('head') == 1)), None)  # Start from the first 'Head' row
-				priority = int(priority)-1
+				current_row = next(
+					(row for row in token_list if (row.get("head") == 1)), None
+				)  # Start from the first 'Head' row
+				priority = int(priority) - 1
 				if priority == 0:
 					next_token = current_row
 					current_row = None
 
-			for i in range(1, int(priority)):
-				if current_row and current_row['next']:
+			for _i in range(1, int(priority)):
+				if current_row and current_row["next"]:
 					# Find the row with the 'Next name' in the table
-					current_row = next(row for row in token_list if ((row['name'] == current_row['next'])))
+					current_row = next(row for row in token_list if (row["name"] == current_row["next"]))
 				else:
 					# Break if there is no 'Next name' or if the next row is not found
 					break
 			last_token = current_row
 		else:
-			last_token = next((row for row in token_list if (row.get('next') in [None, ""])), None)
+			last_token = next((row for row in token_list if (row.get("next") in [None, ""])), None)
 
 	return last_token, actual_priority, next_token
 
 
 def create_random_token_number():
-	allowed_letters = ''.join([char for char in string.ascii_uppercase if char not in "IO"])
+	allowed_letters = "".join([char for char in string.ascii_uppercase if char not in "IO"])
 	tokens = frappe.db.get_all("Patient Token", filters={"status": ["!=", "Expired"]}, pluck="token_number")
 
 	while True:
 		random_letters = random.sample(allowed_letters, 2)  # Get two unique random letters
-		random_token = random_letters[0] + str(random.randrange(1, 10)) + str(random.randrange(1, 10)) + random_letters[1]
+		random_token = (
+			random_letters[0]
+			+ str(random.randrange(1, 10))
+			+ str(random.randrange(1, 10))
+			+ random_letters[1]
+		)
 		if random_token not in tokens:
 			return random_token
 
@@ -351,7 +382,7 @@ def check_priority_rule_exist(reference_doc):
 		"""
 
 		priority_rule = frappe.db.sql(query, as_dict=1)
-		if priority_rule and len(priority_rule)>0:
+		if priority_rule and len(priority_rule) > 0:
 			return priority_rule[0].get("priority_level")
 		else:
 			return False
@@ -361,12 +392,14 @@ def get_the_last_priority_token(token_list, priority):
 	esc_token_list = []
 	# to consider equal priority if exist else lesser for last token
 	if any("priority_level" in d and d["priority_level"] == priority for d in token_list):
-		esc_token_list = [frappe.db.escape(tok.get("name")) for tok in token_list if tok.get("priority_level") == priority]
+		esc_token_list = [
+			frappe.db.escape(tok.get("name")) for tok in token_list if tok.get("priority_level") == priority
+		]
 	else:
 		esc_token_list = [frappe.db.escape(tok.get("name")) for tok in token_list]
 
-	if len(esc_token_list)>0:
-		query 	= f"""
+	if len(esc_token_list) > 0:
+		query = f"""
 			SELECT
 				token.name,
 				token.head,
@@ -386,7 +419,7 @@ def get_the_last_priority_token(token_list, priority):
 		"""
 
 		p_token_list = frappe.db.sql(query, as_dict=1)
-		if p_token_list and len(p_token_list)>0:
+		if p_token_list and len(p_token_list) > 0:
 			return p_token_list[0]
 		else:
 			return False
@@ -438,39 +471,48 @@ def get_last_token_from_service_unit(doc):
 	else:
 		return 0
 
+
 def checkout_from_journey_stop(doc, method=None):
 	"""
 	To checkout from the currently attending journey stop on submitting any of the permitted_doctypes
 	doc: document being submitted
 	"""
-	permitted_doctypes = ['Vital Signs', 'Patient Encounter'] # temporary, need to create child Table in Token settings
-	
-	if doc.doctype in permitted_doctypes:
-		queue_dn = doc.get('service_unit')
+	permitted_doctypes = [
+		"Vital Signs",
+		"Patient Encounter",
+	]  # temporary, need to create child Table in Token settings
 
-		#Check if an active token exists for the patient:
+	if doc.doctype in permitted_doctypes:
+		queue_dn = doc.get("service_unit")
+
+		# Check if an active token exists for the patient:
 		# token_exists = frappe.db.exists('Patient Token', {"patient": doc.patient, "status": "Checked In"})
 
-		#find the Patient Token	for the patient in the Vital Signs doc:
-		if frappe.db.exists('Patient Token', {"patient": doc.patient, "status": "Checked In"}):
-			token = frappe.get_doc('Patient Token', {"patient": doc.patient, "status": "Checked In"})
+		# find the Patient Token	for the patient in the Vital Signs doc:
+		if frappe.db.exists("Patient Token", {"patient": doc.patient, "status": "Checked In"}):
+			token = frappe.get_doc("Patient Token", {"patient": doc.patient, "status": "Checked In"})
 
 			journey_stop = next(
-				(stop for stop in token.patient_journey_stops if stop.get('status') == 'In Progress' and stop.get('service_unit') == queue_dn), None)
+				(
+					stop
+					for stop in token.patient_journey_stops
+					if stop.get("status") == "In Progress" and stop.get("service_unit") == queue_dn
+				),
+				None,
+			)
 
 			if not journey_stop:
-				frappe.msgprint("The Patient is not attending any stops to checkout from", alert= True)
+				frappe.msgprint("The Patient is not attending any stops to checkout from", alert=True)
 				return
 
-			journey_stop.status = 'Checked Out'
+			journey_stop.status = "Checked Out"
 			journey_stop.exit_time = now_datetime()
 
 			journey_stop.time_to_complete = time_diff_in_hours(
-				journey_stop.exit_time,
-				journey_stop.entry_time
+				journey_stop.exit_time, journey_stop.entry_time
 			)
 
-			token.current_service_unit = ''
+			token.current_service_unit = ""
 
 			token.save(ignore_permissions=True)
 			frappe.publish_realtime("update_tokens")
@@ -481,15 +523,13 @@ def checkout_from_journey_stop(doc, method=None):
 	else:
 		return
 
+
 @frappe.whitelist()
-def get_token_to_attend(patient, curr_stop = None):
+def get_token_to_attend(patient, curr_stop=None):
 	queue_dn = None if curr_stop == "undefined" else curr_stop
-	active_token = frappe.db.exists(
-		"Patient Token", {"patient": patient, "status": "Checked In"}
-	)
+	active_token = frappe.db.exists("Patient Token", {"patient": patient, "status": "Checked In"})
 	if active_token:
 		patient_token = frappe.get_doc("Patient Token", active_token)
 		patient_token.attend(queue_dn)
 	else:
 		frappe.throw("Please Check-in before attending")
-	

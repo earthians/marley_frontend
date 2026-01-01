@@ -1,14 +1,14 @@
 import base64
 import json
-from erpnext import get_default_company
-import frappe
-
 from datetime import datetime, timedelta
+
+import frappe
+import frappe.utils
 from frappe.core.doctype.sms_settings.sms_settings import send_sms
 from frappe.utils import format_date, get_date_str, get_time, getdate, nowtime
-from erpnext.setup.doctype.employee.employee import is_holiday
 
-import frappe.utils
+from erpnext import get_default_company
+from erpnext.setup.doctype.employee.employee import is_holiday
 
 from healthcare.healthcare.doctype.patient_appointment.patient_appointment import (
 	check_employee_wise_availability,
@@ -46,14 +46,10 @@ def patient_registration(file=None):
 	if country:
 		if country == "India":
 			new_patient.custom_patient_type = "Regular"
-			new_patient.custom_aadhaar_number = (
-				frappe.form_dict.get("aadhaar_number") or None
-			)
+			new_patient.custom_aadhaar_number = frappe.form_dict.get("aadhaar_number") or None
 		else:
 			new_patient.custom_patient_type = "International"
-			new_patient.custom_passport_number = (
-				frappe.form_dict.get("passport_number") or None
-			)
+			new_patient.custom_passport_number = frappe.form_dict.get("passport_number") or None
 	new_patient.save(ignore_permissions=True)
 
 	_file = None
@@ -80,9 +76,7 @@ def patient_registration(file=None):
 
 @frappe.whitelist()
 def get_slots(date, practitioner):
-	practitioner_doc = frappe.get_doc(
-		"Healthcare Practitioner", {"practitioner_name": practitioner}
-	)
+	practitioner_doc = frappe.get_doc("Healthcare Practitioner", {"practitioner_name": practitioner})
 
 	date = getdate(date)
 	weekday = date.strftime("%A")
@@ -116,29 +110,26 @@ def get_slots(date, practitioner):
 					"Patient Appointment", filters=filters, pluck="appointment_time"
 				)
 
-				practitioner_schedule = frappe.get_doc(
-					"Practitioner Schedule", schedule_entry.schedule
-				)
+				practitioner_schedule = frappe.get_doc("Practitioner Schedule", schedule_entry.schedule)
 				if practitioner_schedule and not practitioner_schedule.disabled:
 					for time_slot in practitioner_schedule.time_slots:
 						if weekday == time_slot.day:
-							hours, remainder = divmod(
-								time_slot.from_time.total_seconds(), 3600
-							)
+							hours, remainder = divmod(time_slot.from_time.total_seconds(), 3600)
 							minutes, seconds = divmod(remainder, 60)
 							time_value = f"{int(hours):01}:{int(minutes):02}"
 							if (
 								date == getdate()
 								and get_time(nowtime()) < get_time(time_slot.from_time)
-								and not time_slot.from_time in booked_slots
+								and time_slot.from_time not in booked_slots
 							):
 								available_slots.append(time_value)
-							elif date > getdate() and not time_slot.from_time in booked_slots:
+							elif date > getdate() and time_slot.from_time not in booked_slots:
 								available_slots.append(time_value)
 	else:
-		return {"status":"no slots"}
+		return {"status": "no slots"}
 
 	return {"status": "success", "slots": list(sorted(available_slots))}
+
 
 def get_slot_position(appointment_id=None):
 	slot_list = []
@@ -146,29 +137,27 @@ def get_slot_position(appointment_id=None):
 	weekday = date.strftime("%A")
 	if not appointment_id:
 		return {"status": "No Appointment"}
-	practitioner = frappe.get_value("Patient Appointment", appointment_id, ["practitioner", "appointment_time"], as_dict= True)
+	practitioner = frappe.get_value(
+		"Patient Appointment", appointment_id, ["practitioner", "appointment_time"], as_dict=True
+	)
 	practitioner_doc = frappe.get_doc("Healthcare Practitioner", practitioner.practitioner)
 
 	if practitioner_doc.practitioner_schedules:
 		for schedule_entry in practitioner_doc.practitioner_schedules:
 			if schedule_entry.service_unit:
-
-				practitioner_schedule = frappe.get_doc(
-					"Practitioner Schedule", schedule_entry.schedule
-				)
+				practitioner_schedule = frappe.get_doc("Practitioner Schedule", schedule_entry.schedule)
 				if practitioner_schedule and not practitioner_schedule.disabled:
 					for time_slot in practitioner_schedule.time_slots:
 						if weekday == time_slot.day:
-							hours, remainder = divmod(
-								time_slot.from_time.total_seconds(), 3600
-							)
+							hours, remainder = divmod(time_slot.from_time.total_seconds(), 3600)
 							minutes, seconds = divmod(remainder, 60)
 							time_value = f"{int(hours):01}:{int(minutes):02}:{int(seconds):02}"
 							slot_list.append(time_value)
-		slot_position = slot_list.index(str(practitioner.appointment_time))+1
+		slot_position = slot_list.index(str(practitioner.appointment_time)) + 1
 		return slot_position
 	else:
-		return {"status":"no slots"}
+		return {"status": "no slots"}
+
 
 @frappe.whitelist()
 def get_slots_by_date_range(practitioner=None, start_date=None, end_date=None):
@@ -179,9 +168,7 @@ def get_slots_by_date_range(practitioner=None, start_date=None, end_date=None):
 		}
 
 	try:
-		practitioner_doc = frappe.get_doc(
-			"Healthcare Practitioner", {"practitioner_name": practitioner}
-		)
+		practitioner_doc = frappe.get_doc("Healthcare Practitioner", {"practitioner_name": practitioner})
 		start_date = frappe.utils.getdate(start_date)
 		end_date = frappe.utils.getdate(end_date)
 
@@ -194,17 +181,13 @@ def get_slots_by_date_range(practitioner=None, start_date=None, end_date=None):
 				},
 				pluck="appointment_time",
 			)
-			booked_slots = [
-				(datetime.min + booked_slot).time() for booked_slot in curr_bookings
-			]
+			booked_slots = [(datetime.min + booked_slot).time() for booked_slot in curr_bookings]
 
 			full_slots = []
 			weekday = date.strftime("%A")
 
 			for schedule_entry in practitioner_doc.practitioner_schedules:
-				practitioner_schedule = frappe.get_doc(
-					"Practitioner Schedule", schedule_entry.schedule
-				)
+				practitioner_schedule = frappe.get_doc("Practitioner Schedule", schedule_entry.schedule)
 
 				if practitioner_schedule and not practitioner_schedule.disabled:
 					available_slots = []
@@ -228,9 +211,10 @@ def get_slots_by_date_range(practitioner=None, start_date=None, end_date=None):
 		return {"status": "success", "days": days}
 
 	except Exception as e:
-		frappe.log_error(
-			f"Error in get_slots_by_date_range: {str(e)}", "Get Slots by Date Range API"
-		)
+		if not isinstance(e, str):
+			e = str(e)
+
+		frappe.log_error(f"Error in get_slots_by_date_range: {e}", "Get Slots by Date Range API")
 		return {"status": "error", "message": str(e)}
 
 
@@ -254,9 +238,7 @@ def patient_appointment(from_kiosk=True):
 	if from_kiosk:
 		patient = frappe.get_doc("Patient", frappe.form_dict.get("patient"))
 	else:
-		patient = frappe.get_doc(
-			"Patient", {"patient_name": frappe.form_dict.get("patient")}
-		)
+		patient = frappe.get_doc("Patient", {"patient_name": frappe.form_dict.get("patient")})
 	new_appointment.patient = patient.name
 	practitioner = frappe.get_doc(
 		"Healthcare Practitioner",
@@ -264,21 +246,15 @@ def patient_appointment(from_kiosk=True):
 	)
 	new_appointment.practitioner = practitioner.name
 	new_appointment.department = practitioner.department
-	new_appointment.appointment_date = frappe.form_dict.get(
-		"date"
-	) or frappe.form_dict.get("daterangevalue")
+	new_appointment.appointment_date = frappe.form_dict.get("date") or frappe.form_dict.get("daterangevalue")
 	new_appointment.appointment_time = frappe.form_dict.get("slot")
 
 	date = frappe.utils.getdate(frappe.form_dict.get("date"))
 	weekday = date.strftime("%A")
 	for schedule_entry in practitioner.practitioner_schedules:
 		# 		validate_practitioner_schedules(schedule_entry, practitioner)
-		practitioner_schedule = frappe.get_doc(
-			"Practitioner Schedule", schedule_entry.schedule
-		)
-		service_unit = frappe.db.get_value(
-			"Healthcare Service Unit", schedule_entry.service_unit, "name"
-		)
+		practitioner_schedule = frappe.get_doc("Practitioner Schedule", schedule_entry.schedule)
+		service_unit = frappe.db.get_value("Healthcare Service Unit", schedule_entry.service_unit, "name")
 
 		if practitioner_schedule and not practitioner_schedule.disabled:
 			available_slots = []
@@ -309,15 +285,10 @@ def get_departments():
 	practitioners = []
 	departments = []
 	default_appointment_type = (
-		frappe.db.get_single_value(
-			"Marley Frontend Settings", "default_appointment_type"
-		)
-		or None
+		frappe.db.get_single_value("Marley Frontend Settings", "default_appointment_type") or None
 	)
 
-	for name in frappe.db.get_all(
-		"Healthcare Practitioner", fields=["practitioner_name", "image"]
-	):
+	for name in frappe.db.get_all("Healthcare Practitioner", fields=["practitioner_name", "image"]):
 		practitioners.append(
 			{
 				"label": name.practitioner_name,
@@ -354,26 +325,21 @@ def get_patient(patient_id):
 	else:
 		return {"error": "No patient found for given number"}
 
+
 @frappe.whitelist()
 def get_patient_name(patient_id=None):
 	exists = frappe.db.exists("Patient", patient_id)
 	if patient_id and exists:
 		patient_name = frappe.db.get_value("Patient", patient_id, "patient_name")
 
-		return {
-			"patient": patient_id,
-			"patient_name": patient_name
-		}
+		return {"patient": patient_id, "patient_name": patient_name}
 	elif patient_id and not exists:
 		token_exists = frappe.db.exists("Patient Token", patient_id)
 		if token_exists:
 			patient = frappe.db.get_value("Patient Token", patient_id, "patient")
 			patient_name = frappe.db.get_value("Patient", patient, "patient_name")
 
-			return {
-				"patient": patient,
-				"patient_name": patient_name
-			}
+			return {"patient": patient, "patient_name": patient_name}
 		else:
 			return {"error": f"No patient found for given number/ID - {patient_id}"}
 	else:
@@ -420,14 +386,10 @@ def get_patients():
 
 
 @frappe.whitelist()
-def get_appointment(
-	practitioner=None, appointment_date=None, appointment_type=None, search_by=None
-):
+def get_appointment(practitioner=None, appointment_date=None, appointment_type=None, search_by=None):
 	practitioner = None if practitioner in undefined_conditions else practitioner
 	search_by = None if search_by in undefined_conditions else search_by
-	appointment_date = (
-		getdate() if appointment_date in undefined_conditions else getdate(appointment_date)
-	)
+	appointment_date = getdate() if appointment_date in undefined_conditions else getdate(appointment_date)
 	appointments = []
 	search_options = []
 	filters = {}
@@ -467,9 +429,7 @@ def get_appointment(
 				"mobile": mobile_number,
 			}
 		)
-		search_options.append(
-			{"label": appointment["name"], "value": appointment["name"]}
-		)
+		search_options.append({"label": appointment["name"], "value": appointment["name"]})
 	return {"appointments": appointments, "search_options": search_options}
 
 
@@ -481,9 +441,7 @@ def create_vitalsigns():
 	if not patient:
 		return {"status": "error", "message": "Patient is required"}
 
-	existing_vital = frappe.db.exists(
-		"Vital Signs", {"patient": patient, "appointment": appointment}
-	)
+	existing_vital = frappe.db.exists("Vital Signs", {"patient": patient, "appointment": appointment})
 
 	if existing_vital:
 		new_vital = frappe.get_doc("Vital Signs", existing_vital)
@@ -520,25 +478,39 @@ def create_vitalsigns():
 def get_all_appointments(patient_id=None, token=None):
 	token = None if token in undefined_conditions else token
 	if token:
-		appointment = frappe.db.get_value("Patient Appointment", {"patient_token": token}, ["name", "appointment_date", "patient"], as_dict=True)
+		appointment = frappe.db.get_value(
+			"Patient Appointment",
+			{"patient_token": token},
+			["name", "appointment_date", "patient"],
+			as_dict=True,
+		)
 		if appointment:
 			token_number = frappe.db.get_value("Patient Token", token, "token_number")
 			if getdate(appointment.get("appointment_date")) < getdate():
-				return {"Token Not Exist": f"The Token number {token_number} has been expired. Appointment ID: {appointment.get('name')}"}
+				return {
+					"Token Not Exist": f"The Token number {token_number} has been expired. Appointment ID: {appointment.get('name')}"
+				}
 			elif getdate(appointment.get("appointment_date")) > getdate():
-				return {"Token Not Exist": f"The Token number {token_number} for the Appointment {appointment.get('name')} is not booked for today. Date of appointment is {format_date(appointment.get('appointment_date'), 'dd-mm-yyyy')}"}
+				return {
+					"Token Not Exist": f"The Token number {token_number} for the Appointment {appointment.get('name')} is not booked for today. Date of appointment is {format_date(appointment.get('appointment_date'), 'dd-mm-yyyy')}"
+				}
 			else:
-				return {"appointment": appointment["name"], "date": appointment["appointment_date"], "patient": appointment["patient"]}
+				return {
+					"appointment": appointment["name"],
+					"date": appointment["appointment_date"],
+					"patient": appointment["patient"],
+				}
 		else:
 			return {"Token Not Exist": f"No appointment exists for token {token}"}
 
-	appointments = frappe.db.get_all("Patient Appointment",
+	appointments = frappe.db.get_all(
+		"Patient Appointment",
 		filters={
 			"patient": patient_id,
 			"appointment_date": getdate(),
 			"status": ["!=", "Cancelled", "Closed"],
 		},
-		fields=['name', 'practitioner_name', 'appointment_date', 'appointment_time', 'service_unit']
+		fields=["name", "practitioner_name", "appointment_date", "appointment_time", "service_unit"],
 	)
 
 	if len(appointments) > 1:
@@ -628,9 +600,7 @@ def check_appointment(patient_id, appointment_id=None):
 				else:
 					# check in to vitals queue (check queue exist: already in the queue go to queue, )
 					if not vitals_queue_exists:
-						return {
-							"alert": f"No active queue for service unit {frappe.bold(vitals_su_name)}"
-						}
+						return {"alert": f"No active queue for service unit {frappe.bold(vitals_su_name)}"}
 
 					message = check_and_insert_token(
 						"Patient Appointment",
@@ -673,9 +643,7 @@ def get_vitals(appointment):
 
 @frappe.whitelist()
 def get_tokens(service_unit=None):
-	slot_based_token = frappe.db.get_value(
-		"Healthcare Service Unit", service_unit, "custom_slot_based_token"
-	)
+	slot_based_token = frappe.db.get_value("Healthcare Service Unit", service_unit, "custom_slot_based_token")
 
 	limit_value = frappe.db.get_single_value("Healthcare Settings", "token_limit")
 	if not limit_value:
@@ -687,19 +655,19 @@ def get_tokens(service_unit=None):
 
 	# Modify the query to use the variable for the LIMIT
 	query = f"""
-		SELECT 
+		SELECT
 			pt.token_number AS token_no,
 			pjs.status AS status,
 			pjs.service_unit AS service_unit
-		FROM 
+		FROM
 			`tabPatient Journey Stop` AS pjs LEFT JOIN
 			`tabPatient Token` AS pt ON pjs.parent=pt.name
-		WHERE 
+		WHERE
 			pjs.service_unit={frappe.db.escape(service_unit)} AND
 			pjs.status IN ('In Progress', 'Checked In') AND
 			pt.status!='Expired' AND
 			DATE(pt.posting_date)=DATE({frappe.db.escape(get_date_str(date))})
-		ORDER BY 
+		ORDER BY
 			CASE WHEN {slot_based_token}=1 THEN pt.slot_position ELSE pjs.check_in_time END ASC
 		LIMIT {limit_value}
 	"""
@@ -730,20 +698,25 @@ def get_tokens(service_unit=None):
 		"results": results,
 		"practitioner": practitioner,
 		"number_of_rows": limit_value,
-		"service_unit_name": frappe.db.get_value("Healthcare Service Unit", service_unit, "healthcare_service_unit_name")
+		"service_unit_name": frappe.db.get_value(
+			"Healthcare Service Unit", service_unit, "healthcare_service_unit_name"
+		),
 	}
 
 
 @frappe.whitelist()
 def trigger_call(token, service_unit):
-	service_unit_name = frappe.get_value("Healthcare Service Unit", service_unit, "healthcare_service_unit_name")
-	frappe.publish_realtime("call", {"token_number":token, "service_unit": service_unit,"service_unit_name": service_unit_name})
+	service_unit_name = frappe.get_value(
+		"Healthcare Service Unit", service_unit, "healthcare_service_unit_name"
+	)
+	frappe.publish_realtime(
+		"call", {"token_number": token, "service_unit": service_unit, "service_unit_name": service_unit_name}
+	)
+
 
 @frappe.whitelist()
 def check_vitals(patient):
-	draft = frappe.db.exists(
-		"Vital Signs", {"patient": patient, "signs_date": getdate(), "docstatus": 0}
-	)
+	draft = frappe.db.exists("Vital Signs", {"patient": patient, "signs_date": getdate(), "docstatus": 0})
 	if draft:
 		return draft
 	return
@@ -767,9 +740,7 @@ def get_file():
 		for file in files:
 			if file["from_date"] <= getdate() <= file["to_date"]:
 				return file["file"]
-	elif frappe.db.exists(
-		"TV Screen Advertisement", {"default": True, "enabled": True}
-	):
+	elif frappe.db.exists("TV Screen Advertisement", {"default": True, "enabled": True}):
 		return frappe.db.get_value("TV Screen Advertisement", {"default": True}, "file")
 	return None
 
@@ -782,23 +753,17 @@ def get_practitioner_charge(practitioner, appointment=None):
 
 	if appointment:
 		patient = frappe.db.get_value("Patient Appointment", appointment, "patient")
-		if frappe.db.get_single_value(
-			"Healthcare Settings", "collect_registration_fee"
-		):
+		if frappe.db.get_single_value("Healthcare Settings", "collect_registration_fee"):
 			if patient:
 				invoiced = frappe.db.get_value("Patient", patient, "invoiced")
 				payment_entry_created = frappe.db.get_value("Patient", patient, "payment_entry_created")
 				if not invoiced and not payment_entry_created:
-					registration_fee = frappe.db.get_single_value(
-						"Healthcare Settings", "registration_fee"
-					)
+					registration_fee = frappe.db.get_single_value("Healthcare Settings", "registration_fee")
 					total_amount += registration_fee if registration_fee else 0
 
 		if practitioner:
 			default_price_list = frappe.db.get_value("Patient", patient, "default_price_list")
-			exists = frappe.db.exists(
-				"Healthcare Practitioner", {"practitioner_name": practitioner}
-			)
+			exists = frappe.db.exists("Healthcare Practitioner", {"practitioner_name": practitioner})
 			if not exists:
 				exists = frappe.db.exists("Healthcare Practitioner", practitioner)
 
@@ -808,7 +773,9 @@ def get_practitioner_charge(practitioner, appointment=None):
 					item = frappe.db.get_single_value("Healthcare Settings", "op_consulting_charge_item")
 
 				practitioner_charge = frappe.db.get_value(
-					"Item Price", { "item_code": item, "price_list": default_price_list, "selling": 1 }, "price_list_rate"
+					"Item Price",
+					{"item_code": item, "price_list": default_price_list, "selling": 1},
+					"price_list_rate",
 				)
 				if not practitioner_charge:
 					practitioner_charge = frappe.db.get_value(
@@ -834,10 +801,16 @@ def check_and_insert_token(ref_doc, docname, patient, appointment, service_unit=
 		},
 	)
 
-	vitals_exist = frappe.db.exists("Vital Signs", {"patient": patient, "signs_date": appointment.appointment_date, "docstatus": ["!=", 2], "appointment": ["!=", appointment.name]})
-	vitals_service_unit = frappe.db.get_value(
-		"Medical Department", appointment.department, "service_unit"
+	vitals_exist = frappe.db.exists(
+		"Vital Signs",
+		{
+			"patient": patient,
+			"signs_date": appointment.appointment_date,
+			"docstatus": ["!=", 2],
+			"appointment": ["!=", appointment.name],
+		},
 	)
+	vitals_service_unit = frappe.db.get_value("Medical Department", appointment.department, "service_unit")
 	if not active_token and not vitals_exist:
 		service_unit = vitals_service_unit
 	else:
@@ -862,13 +835,11 @@ def check_and_insert_token(ref_doc, docname, patient, appointment, service_unit=
 			)
 			if service_unit == "Not Available":
 				return {
-					"alert": f"Practitioner is leave or not available today, Please contact reception for rescheduling your appointment"
+					"alert": "Practitioner is leave or not available today, Please contact reception for rescheduling your appointment"
 				}
 
 	if not service_unit:
-		return {
-			"alert": f"Service Unit need to be there to checkin, Please contact administrator"
-		}
+		return {"alert": "Service Unit need to be there to checkin, Please contact administrator"}
 
 	service_unit_name = frappe.db.get_value(
 		"Healthcare Service Unit", service_unit, "healthcare_service_unit_name"
@@ -893,11 +864,7 @@ def check_and_insert_token(ref_doc, docname, patient, appointment, service_unit=
 
 		if journey_stops and len(journey_stops):
 			stop = journey_stops[-1]
-			if (
-				stop.status in ["Checked In", "In Progress"]
-				and stop.check_in_time
-				and not stop.exit_time
-			):
+			if stop.status in ["Checked In", "In Progress"] and stop.check_in_time and not stop.exit_time:
 				return {
 					"alert": f'{appointment.patient_name} is already checked into {frappe.db.get_value("Healthcare Service Unit", stop.service_unit, "healthcare_service_unit_name")} queue'
 				}
@@ -978,11 +945,7 @@ def send_otp(number=None, otp=None):
 	if ss.sms_gateway_url:
 		send_sms(number, message)
 
-	return {
-		"status": "Success",
-		"alert": hcare_settings.show_browser_alert_for_otp,
-		"message": message
-	}
+	return {"status": "Success", "alert": hcare_settings.show_browser_alert_for_otp, "message": message}
 
 
 @frappe.whitelist()
@@ -1006,9 +969,7 @@ def get_practitioner_current_unit(practitioner, appointment_date, appointment_ti
 	date = getdate(appointment_date)
 	weekday = date.strftime("%A")
 
-	employee, user_id = frappe.db.get_value(
-		"Healthcare Practitioner", practitioner, ["employee", "user_id"]
-	)
+	employee, user_id = frappe.db.get_value("Healthcare Practitioner", practitioner, ["employee", "user_id"])
 
 	is_not_availble = False
 	employee = None
@@ -1085,7 +1046,14 @@ def get_user_info(user=None):
 	if frappe.session.user == "Guest":
 		frappe.throw("Authentication failed", exc=frappe.AuthenticationError)
 
-	defined_user_roles = ["Kiosk User", "Vitals User", "Receptionist", "Physician", "Healthcare Administrator", "System Manager"]
+	defined_user_roles = [
+		"Kiosk User",
+		"Vitals User",
+		"Receptionist",
+		"Physician",
+		"Healthcare Administrator",
+		"System Manager",
+	]
 
 	filters = {"roles.role": ["in", defined_user_roles]}
 	if user:
@@ -1129,12 +1097,14 @@ def get_logo_image():
 
 	return None
 
+
 @frappe.whitelist()
 def get_units():
-	units = frappe.db.get_all("Healthcare Service Unit",
+	units = frappe.db.get_all(
+		"Healthcare Service Unit",
 		filters={"allow_appointments": 1},
 		fields=["name as value", "healthcare_service_unit_name as label"],
-		order_by="name ASC"
+		order_by="name ASC",
 	)
 
 	return units
@@ -1211,6 +1181,7 @@ def get_users():
 # 		method_name = f"get_{l['name']}"
 
 # 	return layout
+
 
 @frappe.whitelist()
 def get_current_patient_data(patient):
