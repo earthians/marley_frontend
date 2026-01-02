@@ -2,6 +2,8 @@ import json
 from datetime import datetime
 
 import frappe
+from frappe.query_builder import DocType
+from frappe.query_builder.functions import Sum
 from frappe.utils import (
 	flt,
 	fmt_money,
@@ -347,15 +349,15 @@ def update_appointment(appointment_data, sort_by="Appointment Time"):
 
 
 def get_total_unallocated_advance_amount(customer=None):
-	advance_balance = frappe.db.get_all(
-		"Payment Entry",
-		filters={
-			"party": customer,
-			"docstatus": 1,
-			"custom_reference_appointment": ["is", "not set"],
-		},
-		fields=["sum(unallocated_amount) as unallocated_amount"],
-	)
+	PE = DocType("Payment Entry")
+
+	advance_balance = (
+		frappe.qb.from_(PE)
+		.select(Sum(PE.unallocated_amount).as_("unallocated_amount"))
+		.where(PE.party == customer)
+		.where(PE.docstatus == 1)
+		.where(PE.custom_reference_appointment.isnull())
+	).run(as_dict=True)
 
 	total_unallocated_advance_amt = 0
 	if advance_balance and len(advance_balance) and advance_balance[0].get("unallocated_amount"):
@@ -366,11 +368,14 @@ def get_total_unallocated_advance_amount(customer=None):
 
 @frappe.whitelist()
 def get_total_advance_amount(customer=None):
-	advance_balance = frappe.db.get_all(
-		"Payment Entry",
-		filters={"party": customer, "docstatus": 1},
-		fields=["sum(unallocated_amount) as unallocated_amount"],
-	)
+	PE = DocType("Payment Entry")
+
+	advance_balance = (
+		frappe.qb.from_(PE)
+		.select(Sum(PE.unallocated_amount).as_("unallocated_amount"))
+		.where(PE.party == customer)
+		.where(PE.docstatus == 1)
+	).run(as_dict=True)
 
 	total_unallocated_advance_amt = 0
 	if advance_balance and len(advance_balance) and advance_balance[0].get("unallocated_amount"):
@@ -1228,16 +1233,18 @@ def get_payments(appointment):
 
 	registration_paid_amount = 0
 	customer = frappe.db.get_value("Patient", appointment_doc.patient, "customer")
-	paid_reg_amount_details = frappe.db.get_all(
-		"Payment Entry",
-		filters={
-			"docstatus": ["!=", 2],
-			"register_paid": 1,
-			"party": customer,
-			"custom_reference_appointment": appointment,
-		},
-		fields=["sum(paid_amount) as amount", "posting_date"],
-	)
+
+	PE = DocType("Payment Entry")
+
+	paid_reg_amount_details = (
+		frappe.qb.from_(PE)
+		.select(Sum(PE.paid_amount).as_("amount"), PE.posting_date)
+		.where(PE.docstatus != 2)
+		.where(PE.register_paid == 1)
+		.where(PE.party == customer)
+		.where(PE.custom_reference_appointment == appointment)
+	).run(as_dict=True)
+
 	if paid_reg_amount_details and paid_reg_amount_details[0].get("amount"):
 		registration_paid_amount = paid_reg_amount_details[0].get("amount")
 		registration_pay_date = paid_reg_amount_details[0].get("posting_date")
@@ -1275,15 +1282,14 @@ def get_payments(appointment):
 
 	total_amount = consultation_charge + registration_fee
 
-	paid_consultation_amount_details = frappe.db.get_all(
-		"Payment Entry",
-		filters={
-			"custom_reference_appointment": appointment,
-			"docstatus": 1,
-			"register_paid": 0,
-		},
-		fields=["sum(paid_amount) as total_amount", "posting_date"],
-	)
+	paid_consultation_amount_details = (
+		frappe.qb.from_(PE)
+		.select(Sum(PE.paid_amount).as_("total_amount"), PE.posting_date)
+		.where(PE.docstatus == 1)
+		.where(PE.register_paid == 0)
+		.where(PE.custom_reference_appointment == appointment)
+	).run(as_dict=True)
+
 	consultation_paid_amount = 0
 	if paid_consultation_amount_details and paid_consultation_amount_details[0].get("total_amount"):
 		consultation_paid_amount = paid_consultation_amount_details[0]["total_amount"]
