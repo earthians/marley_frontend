@@ -38,4 +38,4 @@ Also pages will be listed on workspace `demo.com/app/marley-frontend`
 
 ### License
 
-mit
+GNU GPL V3. See [license.txt](https://github.com/earthians/marley_frontend/blob/develop/license.txt) for more information.
