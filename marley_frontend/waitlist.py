@@ -1380,7 +1380,7 @@ def create_services_sales_invoice(
 	sales_invoice.patient = patient
 	sales_invoice.customer = customer
 	sales_invoice.due_date = getdate()
-	sales_invoice.company = (company,)
+	sales_invoice.company = company
 	sales_invoice.ref_practitioner = enc_doc.get("practitioner")
 	sales_invoice.debit_to = get_receivable_account(company)
 	sales_invoice.disable_rounded_total = 1
