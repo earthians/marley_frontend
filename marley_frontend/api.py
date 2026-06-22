@@ -804,6 +804,21 @@ def check_and_insert_token(ref_doc, docname, patient, appointment, service_unit=
 	)
 	vitals_service_unit = frappe.db.get_value("Medical Department", appointment.department, "service_unit")
 	if not active_token and not vitals_exist:
+		if not vitals_service_unit:
+			dept_name = frappe.db.get_value("Medical Department", appointment.department, "name")
+			return {
+				"alert": f"No Vitals Service Unit configured for department {dept_name}. Please set it in Medical Department"
+			}
+		vitals_queue_exists = frappe.db.exists(
+			"Queue Assignment", {"service_unit": vitals_service_unit, "status": "Active"}
+		)
+		if not vitals_queue_exists:
+			su_name = frappe.db.get_value(
+				"Healthcare Service Unit", vitals_service_unit, "healthcare_service_unit_name"
+			)
+			return {
+				"alert": f"No active queue for vitals service unit {su_name}. Please create a Queue Assignment first"
+			}
 		service_unit = vitals_service_unit
 	else:
 		active_journey_stops = frappe.db.get_all(
@@ -818,6 +833,21 @@ def check_and_insert_token(ref_doc, docname, patient, appointment, service_unit=
 			as_list=False,
 		)
 		if len(active_journey_stops) == 0 and not vitals_exist:
+			if not vitals_service_unit:
+				dept_name = frappe.db.get_value("Medical Department", appointment.department, "name")
+				return {
+					"alert": f"No Vitals Service Unit configured for department {dept_name}. Please set it in Medical Department"
+				}
+			vitals_queue_exists = frappe.db.exists(
+				"Queue Assignment", {"service_unit": vitals_service_unit, "status": "Active"}
+			)
+			if not vitals_queue_exists:
+				su_name = frappe.db.get_value(
+					"Healthcare Service Unit", vitals_service_unit, "healthcare_service_unit_name"
+				)
+				return {
+					"alert": f"No active queue for vitals service unit {su_name}. Please create a Queue Assignment first"
+				}
 			service_unit = vitals_service_unit
 		elif len(active_journey_stops) <= 1:
 			practitioner_unit = get_practitioner_current_unit(
@@ -832,7 +862,7 @@ def check_and_insert_token(ref_doc, docname, patient, appointment, service_unit=
 			service_unit = practitioner_unit or appointment.service_unit or service_unit
 
 	if not service_unit:
-		return {"alert": "Service Unit need to be there to checkin, Please contact administrator"}
+		return {"alert": "No service unit found for this appointment. Please contact administrator"}
 
 	service_unit_name = frappe.db.get_value(
 		"Healthcare Service Unit", service_unit, "healthcare_service_unit_name"
