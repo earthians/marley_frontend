@@ -115,21 +115,7 @@ def get_patients():
 @frappe.whitelist(allow_guest=True)
 def get_appointment_types(practitioner=None, new_patient=False):
 	practitioner = None if practitioner in ["undefined", "", "null"] else practitioner
-	new_patient = False if new_patient in ["undefined", "", "null", "false"] else new_patient
 	filters = {}
-
-	if new_patient:
-		filters = {"custom_is_physio": 0}
-	elif practitioner:
-		is_physio, show_all_appointment_types = frappe.db.get_value(
-			"Healthcare Practitioner",
-			practitioner,
-			["custom_is_physiotherapist", "custom_show_all_appointment_types"],
-		)
-		if not show_all_appointment_types and is_physio:
-			filters = {"custom_is_physio": 1}
-		elif not show_all_appointment_types and not is_physio:
-			filters = {"custom_is_physio": 0}
 
 	appointment_types = frappe.db.get_all(
 		"Appointment Type",
@@ -138,19 +124,6 @@ def get_appointment_types(practitioner=None, new_patient=False):
 	)
 
 	return appointment_types
-
-
-@frappe.whitelist()
-def check_is_physio(app_type=None):
-	app_type = None if app_type in undefined_conditions else app_type
-
-	if isinstance(app_type, dict):
-		app_type = None
-
-	if not app_type:
-		return
-
-	return True if frappe.db.get_value("Appointment Type", app_type, "custom_is_physio") else None
 
 
 # Api for slots getting
@@ -951,7 +924,7 @@ def submit_vitalsigns():
 		vital_doc.vital_signs_note = frappe.form_dict.get("notes")
 		vital_doc.bp_diastolic = frappe.form_dict.get("bp_diastolic")
 		vital_doc.bp_systolic = frappe.form_dict.get("bp_systolic")
-		vital_doc.custom_spo2 = frappe.form_dict.get("spo2")
+
 
 		vital_doc.insert(ignore_permissions=True)
 
@@ -1408,13 +1381,7 @@ def create_services_sales_invoice(
 	sales_invoice.customer = customer
 	sales_invoice.due_date = getdate()
 	sales_invoice.company = (company,)
-	sales_invoice.custom_encounter = encounter
-	sales_invoice.custom_consultation_date = enc_doc.get("encounter_date")
-	sales_invoice.custom_consultant_name = enc_doc.get("practitioner_name")
 	sales_invoice.ref_practitioner = enc_doc.get("practitioner")
-	if encounter and enc_doc.get("custom_packages"):
-		for i in enc_doc.get("custom_packages"):
-			sales_invoice.append("custom_packages", {"package": i.package})
 	sales_invoice.debit_to = get_receivable_account(company)
 	sales_invoice.disable_rounded_total = 1
 

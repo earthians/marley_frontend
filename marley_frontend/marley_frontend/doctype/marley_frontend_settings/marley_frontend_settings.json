@@ -18,10 +18,12 @@
   "column_break_heif",
   "show_browser_alert_for_otp",
   "insert_error_log_for_otp_verification",
+  "show_qr_camera_on_checkin_page",
+  "show_qr_camera_on_kiosk_page",
   "appointment_desk_tab",
-  "default_payment_entry_print_format",
+  "default_payment_entry_print",
   "column_break_xtnh",
-  "default_boarding_pass_print_format"
+  "default_boarding_pass_print"
  ],
  "fields": [
   {
@@ -88,6 +90,20 @@
    "label": "Insert Error Log for OTP Verification"
   },
   {
+   "default": "0",
+   "description": "If checked the QR camera shows on Checkin page continuously. Otherwise need to manually click the button to open QR camera",
+   "fieldname": "show_qr_camera_on_checkin_page",
+   "fieldtype": "Check",
+   "label": "Show QR Camera on Checkin Page"
+  },
+  {
+   "default": "0",
+   "description": "If checked the QR camera shows on Kiosk page continuously. Otherwise need to manually click the button to open QR camera",
+   "fieldname": "show_qr_camera_on_kiosk_page",
+   "fieldtype": "Check",
+   "label": "Show QR Camera on Kiosk Page"
+  },
+  {
    "fieldname": "column_break_heif",
    "fieldtype": "Column Break"
   },
@@ -97,7 +113,7 @@
    "label": "Appointment Desk"
   },
   {
-   "fieldname": "default_payment_entry_print_format",
+   "fieldname": "default_payment_entry_print",
    "fieldtype": "Link",
    "label": "Default Payment Entry Print Format",
    "options": "Print Format"
@@ -107,7 +123,7 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "default_boarding_pass_print_format",
+   "fieldname": "default_boarding_pass_print",
    "fieldtype": "Link",
    "label": "Default Boarding Pass Print Format",
    "options": "Print Format"
@@ -121,7 +137,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-08-19 11:54:01.707722",
+ "modified": "2026-06-22 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Marley Frontend",
  "name": "Marley Frontend Settings",

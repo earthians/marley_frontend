@@ -43,13 +43,6 @@ def patient_registration(file=None):
 	new_patient.city = frappe.form_dict.get("city")
 	new_patient.state = frappe.form_dict.get("state")
 	new_patient.zip_code = frappe.form_dict.get("zip")
-	if country:
-		if country == "India":
-			new_patient.custom_patient_type = "Regular"
-			new_patient.custom_aadhaar_number = frappe.form_dict.get("aadhaar_number") or None
-		else:
-			new_patient.custom_patient_type = "International"
-			new_patient.custom_passport_number = frappe.form_dict.get("passport_number") or None
 	new_patient.save(ignore_permissions=True)
 
 	_file = None
@@ -453,7 +446,6 @@ def create_vitalsigns():
 		new_vital.vital_signs_note = frappe.form_dict.get("notes")
 		new_vital.bp_diastolic = frappe.form_dict.get("bp_diastolic")
 		new_vital.bp_systolic = frappe.form_dict.get("bp_systolic")
-		new_vital.custom_spo2 = frappe.form_dict.get("spo2")
 		new_vital.save(ignore_permissions=True)
 		frappe.db.commit()
 	else:
@@ -828,15 +820,16 @@ def check_and_insert_token(ref_doc, docname, patient, appointment, service_unit=
 		if len(active_journey_stops) == 0 and not vitals_exist:
 			service_unit = vitals_service_unit
 		elif len(active_journey_stops) <= 1:
-			service_unit = get_practitioner_current_unit(
+			practitioner_unit = get_practitioner_current_unit(
 				appointment.practitioner,
 				appointment.appointment_date,
 				appointment.appointment_time,
 			)
-			if service_unit == "Not Available":
+			if practitioner_unit == "Not Available":
 				return {
 					"alert": "Practitioner is leave or not available today, Please contact reception for rescheduling your appointment"
 				}
+			service_unit = practitioner_unit or appointment.service_unit or service_unit
 
 	if not service_unit:
 		return {"alert": "Service Unit need to be there to checkin, Please contact administrator"}
@@ -972,10 +965,7 @@ def get_practitioner_current_unit(practitioner, appointment_date, appointment_ti
 	employee, user_id = frappe.db.get_value("Healthcare Practitioner", practitioner, ["employee", "user_id"])
 
 	is_not_availble = False
-	employee = None
-	if employee:
-		employee = employee
-	elif user_id:
+	if not employee and user_id:
 		employee = frappe.db.get_value("Employee", {"user_id": user_id}, "name")
 
 	if employee:
