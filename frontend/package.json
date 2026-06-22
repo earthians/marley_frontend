@@ -10,20 +10,21 @@
     "copy-html-entry": "cp ../marley_frontend/public/frontend/index.html ../marley_frontend/www/healthcare.html"
   },
   "dependencies": {
+    "@vueuse/core": "^12.5.0",
     "feather-icons": "^4.28.0",
-    "frappe-ui": "^0.1.176",
+    "frappe-ui": "^0.1.248",
     "gemoji": "^8.1.0",
     "highlight.js": "11",
     "socket.io-client": "^4.7.2",
-    "vue": "^3.2.25",
-    "vue-router": "^4.0.12",
+    "vue": "^3.5.0",
+    "vue-router": "^4.1.6",
     "lucide-vue-next": "^0.259.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "4.2.3",
+    "@vitejs/plugin-vue": "^5.0.0",
     "autoprefixer": "^10.4.2",
     "postcss": "^8.4.5",
     "tailwindcss": "3.4.15",
-    "vite": "4.4.9"
+    "vite": "^5.0.0"
   }
 }

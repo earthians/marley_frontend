@@ -7,5 +7,9 @@
         "test": "echo \"Error: no test specified\" && exit 1",
         "dev": "cd frontend && yarn dev",
         "build": "cd frontend && yarn build"
+    },
+    "resolutions": {
+        "@vueuse/core": "^12.5.0",
+        "@vueuse/shared": "^12.5.0"
     }
 }
